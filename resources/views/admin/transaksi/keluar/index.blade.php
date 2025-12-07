@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Transaksi')
+@section('title', 'Transaksi Keluar')
 
 @section('content')
 
 <div class="container-xxl flex-grow-1 container-p-y">
 
-    <h4 class="fw-bold py-3 mb-4">Transaksi Keuangan</h4>
+    <h4 class="fw-bold py-3 mb-4">Transaksi Keluar</h4>
 
     @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
@@ -28,7 +28,6 @@
                         <th>Tanggal</th>
                         <th>Siswa</th>
                         <th>Kelas</th>
-                        <th>Tipe</th>
                         <th>Deskripsi</th>
                         <th>Nominal</th>
                         <th>Metode</th>
@@ -44,14 +43,6 @@
                         <td>{{ $item->tanggal }}</td>
                         <td>{{ $item->siswa->nama ?? '-' }}</td>
                         <td>{{ $item->siswa->kelas->nama_kelas ?? '-' }}</td>
-
-                        <td>
-                            <span class="badge 
-                                {{ $item->tipe == 'masuk' ? 'bg-success' : 'bg-danger' }}">
-                                {{ ucfirst($item->tipe) }}
-                            </span>
-                        </td>
-
                         <td>{{ $item->deskripsi }}</td>
                         <td>Rp {{ number_format($item->nominal, 0, ',', '.') }}</td>
                         <td>{{ ucfirst($item->metode) ?? '-' }}</td>
@@ -63,6 +54,12 @@
                                 data-bs-target="#editTransaksi{{ $item->id }}">
                                 Edit
                             </button>
+
+                            <a href="{{ route('transaksi.kwitansi', $item->id) }}"
+                                class="btn btn-info btn-sm"
+                                target="_blank">
+                                Cetak
+                            </a>
 
                             <form action="{{ route('transaksi.destroy', $item->id) }}"
                                 class="d-inline"
@@ -93,6 +90,8 @@
                                     @csrf
                                     @method('PUT')
 
+                                    <input type="hidden" name="tipe" value="keluar">
+
                                     <div class="modal-body">
 
                                         {{-- TANGGAL --}}
@@ -121,19 +120,6 @@
 
                                             @if(session('error_from') === 'edit_transaksi' && session('edit_id') == $item->id)
                                             @error('siswa_id') <div class="text-danger">{{ $message }}</div> @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- TIPE --}}
-                                        <div class="mb-3">
-                                            <label class="form-label">Tipe</label>
-                                            <select class="form-control" name="tipe">
-                                                <option value="masuk" {{ old('tipe', $item->tipe) == 'masuk' ? 'selected' : '' }}>Masuk</option>
-                                                <option value="keluar" {{ old('tipe', $item->tipe) == 'keluar' ? 'selected' : '' }}>Keluar</option>
-                                            </select>
-
-                                            @if(session('error_from') === 'edit_transaksi' && session('edit_id') == $item->id)
-                                            @error('tipe') <div class="text-danger">{{ $message }}</div> @enderror
                                             @endif
                                         </div>
 
@@ -221,6 +207,8 @@
             <form action="{{ route('transaksi.store') }}" method="POST">
                 @csrf
 
+                <input type="hidden" name="tipe" value="keluar">
+
                 <div class="modal-body">
 
                     {{-- TANGGAL --}}
@@ -247,19 +235,6 @@
 
                         @if(session('error_from') === 'tambah_transaksi')
                         @error('siswa_id') <div class="text-danger">{{ $message }}</div> @enderror
-                        @endif
-                    </div>
-
-                    {{-- TIPE --}}
-                    <div class="mb-3">
-                        <label class="form-label">Tipe</label>
-                        <select name="tipe" class="form-control">
-                            <option value="masuk" {{ old('tipe')=='masuk' ? 'selected' : '' }}>Masuk</option>
-                            <option value="keluar" {{ old('tipe')=='keluar' ? 'selected' : '' }}>Keluar</option>
-                        </select>
-
-                        @if(session('error_from') === 'tambah_transaksi')
-                        @error('tipe') <div class="text-danger">{{ $message }}</div> @enderror
                         @endif
                     </div>
 

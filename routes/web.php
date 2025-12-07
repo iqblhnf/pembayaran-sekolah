@@ -23,7 +23,12 @@ Route::middleware('auth')->group(function () {
         'kelas' => 'kelas'
     ]);
     Route::resource('siswa', SiswaController::class);
+
+    Route::get('/transaksi/masuk', [TransaksiController::class, 'indexMasuk'])->name('transaksi.masuk');
+    Route::get('/transaksi/keluar', [TransaksiController::class, 'indexKeluar'])->name('transaksi.keluar');
     Route::resource('transaksi', TransaksiController::class);
+    Route::get('/transaksi/history/{siswa}', [TransaksiController::class, 'history'])->name('transaksi.history');
+    Route::get('/transaksi/{transaksi}/kwitansi', [TransaksiController::class, 'kwitansi'])->name('transaksi.kwitansi');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

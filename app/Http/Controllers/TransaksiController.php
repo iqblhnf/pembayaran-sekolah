@@ -12,11 +12,39 @@ class TransaksiController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    // public function index()
+    // {
+    //     return view('admin.transaksi.index', [
+    //         'transaksi' => Transaksi::with('siswa')->latest()->get(),
+    //         'siswa'     => Siswa::orderBy('nama')->get(),
+    //     ]);
+    // }
+
+    /**
+     * Hanya transaksi MASUK
+     */
+    public function indexMasuk()
     {
-        return view('admin.transaksi.index', [
-            'transaksi' => Transaksi::with('siswa')->latest()->get(),
-            'siswa'     => Siswa::orderBy('nama')->get(),
+        return view('admin.transaksi.masuk.index', [
+            'transaksi' => Transaksi::with('siswa')
+                ->where('tipe', 'masuk')
+                ->latest()
+                ->get(),
+            'siswa' => Siswa::orderBy('nama')->get(),
+        ]);
+    }
+
+    /**
+     * Hanya transaksi KELUAR
+     */
+    public function indexKeluar()
+    {
+        return view('admin.transaksi.keluar.index', [
+            'transaksi' => Transaksi::with('siswa')
+                ->where('tipe', 'keluar')
+                ->latest()
+                ->get(),
+            'siswa' => Siswa::orderBy('nama')->get(),
         ]);
     }
 
@@ -112,6 +140,45 @@ class TransaksiController extends Controller
      */
     public function destroy(Transaksi $transaksi)
     {
-        //
+        $transaksi->delete();
+
+        return back()->with('success', 'Transaksi berhasil dihapus.');
+    }
+
+    public function history($siswa_id)
+    {
+        $data = Transaksi::where('siswa_id', $siswa_id)
+            ->orderBy('tanggal', 'desc')
+            ->take(20)
+            ->get();
+
+        $html = "";
+
+        if ($data->count() == 0) {
+            $html .= "<small class='text-muted'>Belum ada transaksi.</small>";
+        } else {
+            foreach ($data as $h) {
+                $html .= "
+            <div class='d-flex justify-content-between border-bottom py-1'>
+                <div>
+                    <strong>" . ucfirst($h->tipe) . "</strong><br>
+                    " . $h->deskripsi . "<br>
+                    <small class='text-muted'>" . $h->tanggal . "</small>
+                </div>
+                <div class='text-end'>
+                    Rp " . number_format($h->nominal, 0, ',', '.') . "
+                </div>
+            </div>";
+            }
+        }
+
+        return response()->json(['html' => $html]);
+    }
+
+    public function kwitansi(Transaksi $transaksi)
+    {
+        return view('admin.transaksi.kwitansi', [
+            't' => $transaksi
+        ]);
     }
 }

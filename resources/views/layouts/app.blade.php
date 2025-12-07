@@ -159,10 +159,16 @@
                             <div data-i18n="Siswa">Siswa</div>
                         </a>
                     </li>
-                    <li class="menu-item {{ request()->routeIs('transaksi.*') ? 'active' : '' }}">
-                        <a href="{{ route('transaksi.index') }}" class="menu-link">
+                    <li class="menu-item {{ request()->routeIs('transaksi.masuk') ? 'active' : '' }}">
+                        <a href="{{ route('transaksi.masuk') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-wallet"></i>
-                            <div data-i18n="Transaksi">Transaksi</div>
+                            <div data-i18n="Transaksi">Pemasukan</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ request()->routeIs('transaksi.keluar') ? 'active' : '' }}">
+                        <a href="{{ route('transaksi.keluar') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-wallet"></i>
+                            <div data-i18n="Transaksi">Pengeluaran</div>
                         </a>
                     </li>
                 </ul>
