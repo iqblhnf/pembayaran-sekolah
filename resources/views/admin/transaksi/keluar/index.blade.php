@@ -26,11 +26,8 @@
                     <tr>
                         <th>#</th>
                         <th>Tanggal</th>
-                        <th>Siswa</th>
-                        <th>Kelas</th>
                         <th>Deskripsi</th>
                         <th>Nominal</th>
-                        <th>Metode</th>
                         <th>Keterangan</th>
                         <th>Aksi</th>
                     </tr>
@@ -41,11 +38,8 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $item->tanggal }}</td>
-                        <td>{{ $item->siswa->nama ?? '-' }}</td>
-                        <td>{{ $item->siswa->kelas->nama_kelas ?? '-' }}</td>
                         <td>{{ $item->deskripsi }}</td>
                         <td>Rp {{ number_format($item->nominal, 0, ',', '.') }}</td>
-                        <td>{{ ucfirst($item->metode) ?? '-' }}</td>
                         <td>{{ $item->keterangan ?? '-' }}</td>
 
                         <td>
@@ -105,24 +99,6 @@
                                             @endif
                                         </div>
 
-                                        {{-- SISWA --}}
-                                        <div class="mb-3">
-                                            <label class="form-label">Siswa (Opsional)</label>
-                                            <select name="siswa_id" class="form-control">
-                                                <option value="">-- Tidak Ada --</option>
-                                                @foreach($siswa as $s)
-                                                <option value="{{ $s->id }}"
-                                                    {{ old('siswa_id', $item->siswa_id) == $s->id ? 'selected' : '' }}>
-                                                    {{ $s->nama }}
-                                                </option>
-                                                @endforeach
-                                            </select>
-
-                                            @if(session('error_from') === 'edit_transaksi' && session('edit_id') == $item->id)
-                                            @error('siswa_id') <div class="text-danger">{{ $message }}</div> @enderror
-                                            @endif
-                                        </div>
-
                                         {{-- DESKRIPSI --}}
                                         <div class="mb-3">
                                             <label class="form-label">Deskripsi</label>
@@ -144,20 +120,6 @@
 
                                             @if(session('error_from') === 'edit_transaksi' && session('edit_id') == $item->id)
                                             @error('nominal') <div class="text-danger">{{ $message }}</div> @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- METODE --}}
-                                        <div class="mb-3">
-                                            <label class="form-label">Metode</label>
-                                            <select class="form-control" name="metode">
-                                                <option value="">-- Pilih --</option>
-                                                <option value="tunai" {{ old('metode', $item->metode) == 'tunai' ? 'selected' : '' }}>Tunai</option>
-                                                <option value="transfer" {{ old('metode', $item->metode) == 'transfer' ? 'selected' : '' }}>Transfer</option>
-                                            </select>
-
-                                            @if(session('error_from') === 'edit_transaksi' && session('edit_id') == $item->id)
-                                            @error('metode') <div class="text-danger">{{ $message }}</div> @enderror
                                             @endif
                                         </div>
 
@@ -221,23 +183,6 @@
                         @endif
                     </div>
 
-                    {{-- SISWA --}}
-                    <div class="mb-3">
-                        <label class="form-label">Siswa (Opsional)</label>
-                        <select name="siswa_id" class="form-control">
-                            <option value="">-- Tidak Ada --</option>
-                            @foreach($siswa as $s)
-                            <option value="{{ $s->id }}" {{ old('siswa_id') == $s->id ? 'selected' : '' }}>
-                                {{ $s->nama }}
-                            </option>
-                            @endforeach
-                        </select>
-
-                        @if(session('error_from') === 'tambah_transaksi')
-                        @error('siswa_id') <div class="text-danger">{{ $message }}</div> @enderror
-                        @endif
-                    </div>
-
                     {{-- DESKRIPSI --}}
                     <div class="mb-3">
                         <label class="form-label">Deskripsi</label>
@@ -259,20 +204,6 @@
 
                         @if(session('error_from') === 'tambah_transaksi')
                         @error('nominal') <div class="text-danger">{{ $message }}</div> @enderror
-                        @endif
-                    </div>
-
-                    {{-- METODE --}}
-                    <div class="mb-3">
-                        <label class="form-label">Metode</label>
-                        <select class="form-control" name="metode">
-                            <option value="">-- Pilih --</option>
-                            <option value="tunai" {{ old('metode')=='tunai' ? 'selected' : '' }}>Tunai</option>
-                            <option value="transfer" {{ old('metode')=='transfer' ? 'selected' : '' }}>Transfer</option>
-                        </select>
-
-                        @if(session('error_from') === 'tambah_transaksi')
-                        @error('metode') <div class="text-danger">{{ $message }}</div> @enderror
                         @endif
                     </div>
 

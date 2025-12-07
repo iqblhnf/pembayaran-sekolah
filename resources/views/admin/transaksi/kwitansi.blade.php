@@ -1,263 +1,220 @@
-<!DOCTYPE html>
-<html>
+@php
 
-<head>
-    <meta charset="utf-8">
-    <title>Kwitansi Pembayaran</title>
+if (!function_exists('terbilang')) {
+function terbilang($number)
+{
+$number = abs($number);
+$words = array("", "satu", "dua", "tiga", "empat", "lima", "enam",
+"tujuh", "delapan", "sembilan", "sepuluh", "sebelas");
 
-    <style>
-        body {
-            font-family: "Poppins", Arial, sans-serif;
-            background: #eef2f9;
-            padding: 40px;
-        }
+if ($number < 12) {
+    return $words[$number];
+    } elseif ($number < 20) {
+    return terbilang($number - 10) . " belas" ;
+    } elseif ($number < 100) {
+    return terbilang(intval($number / 10)) . " puluh " . terbilang($number % 10);
+    } elseif ($number < 200) {
+    return "seratus " . terbilang($number - 100);
+    } elseif ($number < 1000) {
+    return terbilang(intval($number / 100)) . " ratus " . terbilang($number % 100);
+    } elseif ($number < 2000) {
+    return "seribu " . terbilang($number - 1000);
+    } elseif ($number < 1000000) {
+    return terbilang(intval($number / 1000)) . " ribu " . terbilang($number % 1000);
+    } elseif ($number < 1000000000) {
+    return terbilang(intval($number / 1000000)) . " juta " . terbilang($number % 1000000);
+    } elseif ($number < 1000000000000) {
+    return terbilang(intval($number / 1000000000)) . " milyar " . terbilang($number % 1000000000);
+    } else {
+    return "Angka terlalu besar" ;
+    }
+    }
+    }
 
-        .invoice {
-            max-width: 650px;
-            margin: auto;
-            background: #ffffff;
-            border-radius: 18px;
-            overflow: hidden;
-            color: #1e1e1e;
-            box-shadow: 0 20px 50px rgba(0, 55, 150, 0.15);
-            border: 1px solid #dbe4f3;
-        }
+    @endphp
 
-        /* ---------------- HEADER ---------------- */
-        .header {
-            padding: 35px 40px;
-            background: linear-gradient(135deg, #1e40af, #3b82f6);
-            color: #fff;
-        }
+    <!DOCTYPE html>
+    <html lang="id">
 
-        .header-title {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: .5px;
-        }
-
-        .badge-type {
-            margin-top: 14px;
-            display: inline-block;
-            padding: 7px 18px;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 25px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #fff;
-        }
-
-        .masuk {
-            background: rgba(46, 204, 112, 0.9);
-        }
-
-        .keluar {
-            background: rgba(231, 76, 60, 0.9);
-        }
-
-        /* ---------------- CONTENT ---------------- */
-        .content {
-            padding: 35px 40px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-        }
-
-        .label {
-            color: #66748a;
-            font-size: 14px;
-        }
-
-        .value {
-            font-size: 15px;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        /* ---------------- AMOUNT BOX ---------------- */
-        .amount-box {
-            margin-top: 35px;
-            padding: 28px;
-            background: linear-gradient(135deg, #f1f5ff, #dbe7ff);
-            border: 1px solid #c7d7ff;
-            border-radius: 16px;
-            text-align: center;
-        }
-
-        .amount-title {
-            font-size: 13px;
-            color: #51617a;
-        }
-
-        .amount {
-            margin-top: 8px;
-            font-size: 32px;
-            font-weight: 800;
-            color: #1e40af;
-        }
-
-        .divider {
-            margin: 40px 0;
-            border-bottom: 1px dashed #c4ccdd;
-        }
-
-        /* ---------------- SIGNATURE ---------------- */
-        .signature-block {
-            text-align: right;
-            margin-top: 20px;
-        }
-
-        .sig-line {
-            width: 180px;
-            border-bottom: 1px solid #1e1e1e;
-            margin-left: auto;
-            margin-top: 75px;
-        }
-
-        /* ---------------- FOOTER ---------------- */
-        .footer {
-            padding: 22px;
-            background: #f6f8ff;
-            font-size: 12px;
-            color: #6c7a92;
-            text-align: center;
-            border-top: 1px solid #d7e0f5;
-        }
-
-        /* ---------------- PRINT BUTTON ---------------- */
-        .print-btn {
-            margin-bottom: 25px;
-            padding: 12px 20px;
-            background: #1e40af;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 14px;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .print-btn:hover {
-            background: #2539b6;
-        }
-
-        /* ========================================================= */
-        /* ========== FIX PRINT: KEEP ALL COLORS & SHADOW ========== */
-        /* ========================================================= */
-        @media print {
-
-            /* Pastikan warna & gradient tidak hilang */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-            }
-
+    <head>
+        <meta charset="UTF-8">
+        <title>Kwitansi Pembayaran</title>
+        <style>
             body {
-                padding: 0 !important;
-                background: #ffffff !important;
+                font-family: Arial, sans-serif;
             }
 
-            .print-btn {
-                display: none !important;
+            .border {
+                display: table;
+                width: 900px;
+                border: 1px solid #000;
+                padding: 10px;
+                margin: auto;
             }
 
-            /* ----- FORCE BOX SHADOW SAAT PRINT ----- */
-            .invoice {
-                box-shadow: 0 20px 50px rgba(0, 55, 150, 0.15) !important;
-                border: 1px solid #dbe4f3 !important;
-
-                /* Hack wajib untuk memaksa Chrome mencetak shadow */
-                -webkit-filter: drop-shadow(0 20px 50px rgba(0, 55, 150, 0.15)) !important;
-                filter: drop-shadow(0 20px 50px rgba(0, 55, 150, 0.15)) !important;
+            .left {
+                display: table-cell;
+                width: 28%;
+                border-right: 1px solid #000;
+                padding-right: 10px;
+                font-size: 13px;
+                line-height: 20px;
             }
-        }
-    </style>
-</head>
 
-<body>
+            .right {
+                display: table-cell;
+                padding-left: 15px;
+            }
 
-    <div style="text-align:center;">
-        <a onclick="window.print()" class="print-btn">Print Kwitansi</a>
-    </div>
+            .title {
+                text-align: center;
+                font-weight: bold;
+                font-size: 17px;
+                margin-bottom: 30px;
+            }
 
-    <div class="invoice">
+            .line {
+                display: inline-block;
+                border-bottom: 1px dotted #000;
+                width: 100%;
+                height: 12px;
+            }
 
-        <!-- HEADER -->
-        <div class="header">
-            <div class="header-title">Kwitansi Pembayaran</div>
+            .rp-sign-wrapper {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
 
-            @if($t->tipe === 'masuk')
-            <span class="badge-type masuk">Pemasukan</span>
-            @else
-            <span class="badge-type keluar">Pengeluaran</span>
-            @endif
-        </div>
+            .rp-box {
+                display: inline-block;
+                padding: 8px 10px;
+                border: 1px solid #000;
+                transform: skew(-20deg);
+                /* bikin miring */
+                width: 200px;
+            }
 
-        <!-- CONTENT -->
-        <div class="content">
+            .rp-text {
+                transform: skew(20deg);
+                /* mengembalikan teks agar tidak ikut miring */
+                display: inline-block;
+            }
 
-            <div class="info-row">
-                <div class="label">Nomor Kwitansi</div>
-                <div class="value">{{ $t->id }}</div>
-            </div>
+            .sign {
+                display: flex;
+                gap: 40px;
+                margin-top: 25px;
+            }
 
-            <div class="info-row">
-                <div class="label">Tanggal</div>
-                <div class="value">{{ $t->tanggal }}</div>
-            </div>
+            .sign div {
+                text-align: center;
+                width: 150px;
+            }
 
-            <div class="info-row">
-                <div class="label">Nama Siswa</div>
-                <div class="value">{{ $t->siswa->nama ?? '-' }}</div>
-            </div>
+            .space {
+                margin-bottom: 10px;
+            }
+        </style>
+    </head>
 
-            <div class="info-row">
-                <div class="label">Kelas</div>
-                <div class="value">{{ $t->siswa->kelas->nama_kelas ?? '-' }}</div>
-            </div>
+    <body>
 
-            <div class="info-row">
-                <div class="label">Metode Pembayaran</div>
-                <div class="value">{{ ucfirst($t->metode) ?? '-' }}</div>
-            </div>
+        <div class="border">
 
-            <div class="info-row">
-                <div class="label">Deskripsi</div>
-                <div class="value">{{ $t->deskripsi }}</div>
-            </div>
+            <!-- LEFT SIDE -->
+            <div class="left">
 
-            <!-- AMOUNT -->
-            <div class="amount-box">
-                <div class="amount-title">Total Pembayaran</div>
-                <div class="amount">
-                    Rp {{ number_format($t->nominal, 0, ',', '.') }}
+                <div style="display: flex; gap: 3px;">
+                    No:
+                    <span class="">{{ $no_urut }}</span>
                 </div>
-            </div>
 
-            <div class="divider"></div>
-
-            <!-- SIGNATURE -->
-            <div class="signature-block">
-                Lampung, {{ now()->format('d-m-Y') }}
-
-                <div class="sig-line"></div>
-                <div style="margin-top:6px; font-size:13px;">
-                    Bendahara Sekolah
+                <div style="display: flex; gap: 3px; margin-bottom: 10px;">
+                    Tanggal:
+                    <span class="">{{ \Carbon\Carbon::parse($t->tanggal)->format('d M Y') }}</span>
                 </div>
+
+                <div style="margin-bottom: 10px;">
+                    Terima Dari: <br>
+                    <span class="">{{ $t->siswa->nama ?? '-' }}</span>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    Jumlah: <br>
+                    <span class="">Rp {{ number_format($t->nominal, 0, ',', '.') }}</span>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    Jenis Pembayaran: <br>
+                    <span class="">
+                        {{ $t->tipe == 'masuk' ? 'PEMASUKAN' : 'PENGELUARAN' }}
+                    </span>
+                </div>
+
+                Untuk Pembayaran: <br>
+                <span class="">{{ $t->keterangan }}</span>
             </div>
+
+            <!-- RIGHT SIDE -->
+            <div class="right">
+
+                <div class="title">KWITANSI PEMBAYARAN</div>
+
+                <div class="space" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                    <div style="width:48%;">
+                        No: <span class="" style="width: 50%;">{{ $no_urut }}</span>
+                    </div>
+
+                    <div style="width:48%; text-align:right;">
+                        Tanggal: <span class="" style="width:50%;">{{ \Carbon\Carbon::parse($t->tanggal)->format('d M Y') }}</span>
+                    </div>
+                </div>
+
+                <div class="space" style="display: flex; gap: 3px;">
+                    Terima Dari: <span class="" style="width: 85%;">{{ $t->siswa->nama ?? '-' }}</span>
+                </div>
+
+                <div class="space" style="display: flex; gap: 3px;">
+                    Terbilang: <span class="" style="width: 87.6%;">{{ ucwords(terbilang($t->nominal)) }} Rupiah</span>
+                </div>
+
+                <div class="space" style="display: flex; gap: 3px;">
+                    Untuk Pembayaran: <span class="" style="width: 76%;">{{ $t->keterangan }}</span>
+                </div>
+
+                <br>
+
+                <div class="rp-sign-wrapper">
+
+                    <div class="rp-box">
+                        <span class="rp-text">RP. {{ number_format($t->nominal, 0, ',', '.') }}</span>
+                    </div>
+
+                    <div class="sign">
+                        <div>
+                            <span class="line" style="width:100%;"></span><br>
+                            Tanda tangan Penerima
+                        </div>
+
+                        <div>
+                            <span class="line" style="width:100%;"></span><br>
+                            Tanda tangan Penyetor
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div style="clear: both;"></div>
         </div>
 
-        <!-- FOOTER -->
-        <div class="footer">
-            Dokumen ini dihasilkan otomatis oleh sistem dan sah tanpa tanda tangan.
-        </div>
+    </body>
 
-    </div>
+    <script>
+        window.print();
+    </script>
 
-</body>
 
-</html>
+    </html>

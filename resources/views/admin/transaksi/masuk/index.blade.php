@@ -239,8 +239,8 @@
                     </div>
 
                     {{-- === HISTORY PEMBAYARAN === --}}
-                    <div id="history-box" class="mt-3" style="display:none;">
-                        <h6>Riwayat Pembayaran Siswa</h6>
+                    <div id="history-box" class="mt-3 mb-3" style="display:none;">
+                        <h6 style="margin-bottom: 0.5rem;">Riwayat Pembayaran Siswa</h6>
                         <div id="history-content"
                             class="border rounded p-2"
                             style="max-height: 200px; overflow-y: auto; background:#fafafa;">

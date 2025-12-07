@@ -65,15 +65,22 @@ class TransaksiController extends Controller
         $cleanNominal = str_replace('.', '', $request->nominal);
         $request->merge(['nominal' => $cleanNominal]);
 
-        $validator = Validator::make($request->all(), [
+        // RULE DASAR
+        $rules = [
             'tanggal'   => 'required|date',
-            'siswa_id'  => 'nullable|exists:siswa,id',
             'tipe'      => 'required|in:masuk,keluar',
             'deskripsi' => 'required|string|max:255',
             'nominal'   => 'required|numeric|min:1',
-            'metode'    => 'nullable|in:tunai,transfer',
             'keterangan' => 'nullable|string',
-        ]);
+        ];
+
+        // VALIDASI TAMBAHAN KHUSUS PEMASUKAN
+        if ($request->tipe === 'masuk') {
+            $rules['siswa_id'] = 'nullable|exists:siswa,id';
+            $rules['metode']   = 'nullable|in:tunai,transfer';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return back()
@@ -81,9 +88,17 @@ class TransaksiController extends Controller
                 ->with('error_from', 'tambah_transaksi');
         }
 
-        Transaksi::create($validator->validated() + [
-            'created_by' => auth()->id(), // otomatis set user input
-        ]);
+        $data = $validator->validated();
+
+        // Jika pengeluaran → kosongkan siswa dan metode
+        if ($request->tipe === 'keluar') {
+            $data['siswa_id'] = null;
+            $data['metode'] = null;
+        }
+
+        $data['created_by'] = auth()->id();
+
+        Transaksi::create($data);
 
         return back()->with('success', 'Transaksi berhasil ditambahkan.');
     }
@@ -109,19 +124,26 @@ class TransaksiController extends Controller
      */
     public function update(Request $request, Transaksi $transaksi)
     {
-        // Hapus titik pada nominal (supaya numeric)
+        // Hapus titik pada nominal
         $cleanNominal = str_replace('.', '', $request->nominal);
         $request->merge(['nominal' => $cleanNominal]);
 
-        $validator = Validator::make($request->all(), [
+        // RULE DASAR
+        $rules = [
             'tanggal'   => 'required|date',
-            'siswa_id'  => 'nullable|exists:siswa,id',
             'tipe'      => 'required|in:masuk,keluar',
             'deskripsi' => 'required|string|max:255',
             'nominal'   => 'required|numeric|min:1',
-            'metode'    => 'nullable|in:tunai,transfer',
             'keterangan' => 'nullable|string',
-        ]);
+        ];
+
+        // VALIDASI KHUSUS PEMASUKAN
+        if ($request->tipe === 'masuk') {
+            $rules['siswa_id'] = 'nullable|exists:siswa,id';
+            $rules['metode']   = 'nullable|in:tunai,transfer';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return back()
@@ -130,7 +152,15 @@ class TransaksiController extends Controller
                 ->with('edit_id', $transaksi->id);
         }
 
-        $transaksi->update($validator->validated());
+        $data = $validator->validated();
+
+        // Jika tipe = keluar → siswa & metode harus null
+        if ($request->tipe === 'keluar') {
+            $data['siswa_id'] = null;
+            $data['metode'] = null;
+        }
+
+        $transaksi->update($data);
 
         return back()->with('success', 'Transaksi berhasil diperbarui.');
     }
@@ -177,8 +207,14 @@ class TransaksiController extends Controller
 
     public function kwitansi(Transaksi $transaksi)
     {
+        // Hitung nomor urut berdasarkan tipe transaksi
+        $noUrut = Transaksi::where('tipe', $transaksi->tipe)
+            ->where('id', '<=', $transaksi->id)
+            ->count();
+
         return view('admin.transaksi.kwitansi', [
-            't' => $transaksi
+            't' => $transaksi,
+            'no_urut' => $noUrut
         ]);
     }
 }
