@@ -171,6 +171,12 @@
                             <div data-i18n="Transaksi">Pengeluaran</div>
                         </a>
                     </li>
+                    <li class="menu-item">
+                        <a href="javascript:void(0)" class="menu-link" data-bs-toggle="modal" data-bs-target="#filterBukuKas">
+                            <i class="menu-icon tf-icons bx bx-book-content"></i>
+                            <div>Buku Kas</div>
+                        </a>
+                    </li>
                 </ul>
             </aside>
             <!-- / Menu -->
@@ -344,6 +350,55 @@
             }
         }
     </script>
+
+    <div class="modal fade" id="filterBukuKas" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Filter Buku Kas</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form action="{{ route('bukuKas.print') }}" method="GET" target="_blank">
+                    @csrf
+
+                    <div class="modal-body">
+
+                        {{-- TAHUN --}}
+                        <div class="mb-3">
+                            <label class="col-form-label">Tahun</label>
+                            <select class="form-control" name="tahun" required>
+                                @for ($i = date('Y'); $i >= date('Y') - 5; $i--)
+                                <option value="{{ $i }}">{{ $i }}</option>
+                                @endfor
+                            </select>
+                        </div>
+
+                        {{-- RENTANG TANGGAL --}}
+                        <div class="mb-3">
+                            <label class="col-form-label">Dari Tanggal</label>
+                            <input type="date" class="form-control" name="from">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="col-form-label">Sampai Tanggal</label>
+                            <input type="date" class="form-control" name="to">
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+
+                        <button type="submit" class="btn btn-primary">Tampilkan</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
 
 </body>
 

@@ -137,7 +137,7 @@ if ($number < 12) {
 
                 <div style="margin-bottom: 10px;">
                     Terima Dari: <br>
-                    <span class="">{{ $t->siswa->nama ?? '-' }}</span>
+                    <span class="">{{ $t->siswa->nama ?? 'Bendahara' }}</span>
                 </div>
 
                 <div style="margin-bottom: 10px;">
@@ -172,7 +172,7 @@ if ($number < 12) {
                 </div>
 
                 <div class="space" style="display: flex; gap: 3px;">
-                    Terima Dari: <span class="" style="width: 85%;">{{ $t->siswa->nama ?? '-' }}</span>
+                    Terima Dari: <span class="" style="width: 85%;">{{ $t->siswa->nama ?? 'Bendahara' }}</span>
                 </div>
 
                 <div class="space" style="display: flex; gap: 3px;">

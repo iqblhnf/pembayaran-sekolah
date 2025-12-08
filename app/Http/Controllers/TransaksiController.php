@@ -217,4 +217,137 @@ class TransaksiController extends Controller
             'no_urut' => $noUrut
         ]);
     }
+
+    public function print(Request $request)
+    {
+        $tahun = $request->tahun ?? date('Y');
+        $from  = $request->from;
+        $to    = $request->to;
+
+        // ===============================
+        // Query data utama
+        // ===============================
+
+        $query = Transaksi::whereYear('tanggal', $tahun);
+
+        if ($from) {
+            $query->whereDate('tanggal', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('tanggal', '<=', $to);
+        }
+
+        $rawData = $query->orderBy('tanggal', 'asc')->get();
+
+        // ===============================
+        // HITUNG SALDO AWAL
+        // ===============================
+
+        $saldoAwal = 0;
+
+        if ($from) {
+            $before = Transaksi::whereDate('tanggal', '<', $from)->get();
+
+            foreach ($before as $b) {
+                if ($b->tipe === 'masuk') {
+                    $saldoAwal += $b->nominal;
+                } else {
+                    $saldoAwal -= $b->nominal;
+                }
+            }
+        }
+
+        // ===============================
+        // GROUPING PER TANGGAL
+        // ===============================
+
+        $grouped = [];
+
+        foreach ($rawData as $r) {
+
+            $key = $r->tanggal;
+
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'tanggal'     => date('d-m-Y', strtotime($r->tanggal)),
+                    'penerimaan'  => 0,
+                    'pengeluaran' => 0,
+                ];
+            }
+
+            if ($r->tipe === 'masuk') {
+                $grouped[$key]['penerimaan'] += $r->nominal;
+            } else {
+                $grouped[$key]['pengeluaran'] += $r->nominal;
+            }
+        }
+
+        // ===============================
+        // HITUNG SALDO BERJALAN
+        // ===============================
+
+        $saldo = $saldoAwal;
+        $rows  = [];
+
+        foreach ($grouped as $tgl => $g) {
+
+            $saldo += ($g['penerimaan'] - $g['pengeluaran']);
+
+            $rows[] = [
+                'tanggal'     => $g['tanggal'],
+
+                // Uraian manual (sesuai permintaan)
+                'uraian'      => 'Transaksi Tanggal Ini',
+
+                // Nomor bukti otomatis: BK-YYYYMMDD
+                'no_bukti'    => 'BK-' . str_replace('-', '', $tgl),
+
+                'penerimaan'  => $g['penerimaan'] > 0
+                    ? number_format($g['penerimaan'], 0, ',', '.')
+                    : '',
+                'pengeluaran' => $g['pengeluaran'] > 0
+                    ? number_format($g['pengeluaran'], 0, ',', '.')
+                    : '',
+                'saldo'       => number_format($saldo, 0, ',', '.'),
+            ];
+        }
+
+        // ===============================
+        // NAMA BULAN
+        // ===============================
+
+        if ($from) {
+            $namaBulan = strtoupper(\Carbon\Carbon::parse($from)->translatedFormat('F'));
+        } else {
+            $namaBulan = '....................';
+        }
+
+        // ===============================
+        // PERIODE FILTER
+        // ===============================
+
+        if ($from && $to) {
+            $periode = \Carbon\Carbon::parse($from)->translatedFormat('d F Y')
+                . ' s/d ' .
+                \Carbon\Carbon::parse($to)->translatedFormat('d F Y');
+        } elseif ($from && !$to) {
+            $periode = \Carbon\Carbon::parse($from)->translatedFormat('d F Y') . ' s/d ...';
+        } elseif (!$from && $to) {
+            $periode = '... s/d ' . \Carbon\Carbon::parse($to)->translatedFormat('d F Y');
+        } else {
+            $periode = "Tahun $tahun";
+        }
+
+        // ===============================
+        // TANGGAL TANDA TANGAN
+        // ===============================
+
+        $today = \Carbon\Carbon::now()->translatedFormat('d F Y');
+
+        // ===============================
+        // KIRIM KE BLADE
+        // ===============================
+
+        return view('admin.bukukas.print', compact('rows', 'namaBulan', 'tahun', 'today', 'periode'));
+    }
 }

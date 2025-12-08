@@ -30,5 +30,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/transaksi/history/{siswa}', [TransaksiController::class, 'history'])->name('transaksi.history');
     Route::get('/transaksi/{transaksi}/kwitansi', [TransaksiController::class, 'kwitansi'])->name('transaksi.kwitansi');
 
+    Route::get('/buku-kas/print', [TransaksiController::class, 'print'])->name('bukuKas.print');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
