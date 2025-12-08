@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JenisPembayaran;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class TransaksiController extends Controller
                 ->latest()
                 ->get(),
             'siswa' => Siswa::orderBy('nama')->get(),
+            'jenis_pembayaran' => JenisPembayaran::orderBy('nama_pembayaran')->get(),
         ]);
     }
 
@@ -44,7 +46,7 @@ class TransaksiController extends Controller
                 ->where('tipe', 'keluar')
                 ->latest()
                 ->get(),
-            'siswa' => Siswa::orderBy('nama')->get(),
+            // 'siswa' => Siswa::orderBy('nama')->get(),
         ]);
     }
 
@@ -72,6 +74,9 @@ class TransaksiController extends Controller
             'deskripsi' => 'required|string|max:255',
             'nominal'   => 'required|numeric|min:1',
             'keterangan' => 'nullable|string',
+
+            // WAJIB UNTUK SEMUA TRANSAKSI
+            'jenis_pembayaran_id' => 'required|exists:jenis_pembayarans,id',
         ];
 
         // VALIDASI TAMBAHAN KHUSUS PEMASUKAN
@@ -135,6 +140,9 @@ class TransaksiController extends Controller
             'deskripsi' => 'required|string|max:255',
             'nominal'   => 'required|numeric|min:1',
             'keterangan' => 'nullable|string',
+
+            // WAJIB UNTUK SEMUA TRANSAKSI
+            'jenis_pembayaran_id' => 'required|exists:jenis_pembayarans,id',
         ];
 
         // VALIDASI KHUSUS PEMASUKAN

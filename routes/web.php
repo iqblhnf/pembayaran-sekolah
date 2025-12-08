@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\JenisPembayaranController;
 use App\Http\Controllers\KelasController;
 use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\TransaksiController;
@@ -22,7 +23,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('kelas', KelasController::class)->parameters([
         'kelas' => 'kelas'
     ]);
+
+    Route::post('/siswa/import-preview', [SiswaController::class, 'importPreview'])->name('siswa.import.preview');
+    Route::post('/siswa/import-confirm', [SiswaController::class, 'importConfirm'])->name('siswa.import.confirm');
+    Route::get('/siswa/download-template', [SiswaController::class, 'downloadTemplate'])->name('siswa.download.template');
+    Route::get('/siswa/{id}/riwayat', [SiswaController::class, 'riwayat'])->name('siswa.riwayat');
+    
     Route::resource('siswa', SiswaController::class);
+
+    Route::resource('jenis-pembayaran', JenisPembayaranController::class);
 
     Route::get('/transaksi/masuk', [TransaksiController::class, 'indexMasuk'])->name('transaksi.masuk');
     Route::get('/transaksi/keluar', [TransaksiController::class, 'indexKeluar'])->name('transaksi.keluar');

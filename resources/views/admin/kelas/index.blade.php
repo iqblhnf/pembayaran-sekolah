@@ -25,7 +25,7 @@
                     <tr class="text-nowrap">
                         <th>#</th>
                         <th>Nama Kelas</th>
-                        <th>Keterangan</th>
+                        <th>Angkatan</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -34,7 +34,7 @@
                     <tr>
                         <th scope="row">{{ $loop->iteration }}</th>
                         <td>{{ $item->nama_kelas }}</td>
-                        <td>{{ $item->keterangan ?? '-' }}</td>
+                        <td>{{ $item->angkatan }}</td>
                         <td>
                             <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editKelas{{ $item->id }}">
                                 Edit
@@ -77,13 +77,17 @@
                                             @endif
                                         </div>
 
-                                        {{-- KETERANGAN --}}
+                                        {{-- ANGKATAN --}}
                                         <div class="mb-3">
-                                            <label class="col-form-label">Keterangan</label>
-                                            <textarea class="form-control" name="keterangan" rows="5">{{ old('keterangan', $item->keterangan) }}</textarea>
+                                            <label class="col-form-label">Angkatan</label>
+                                            <input type="text"
+                                                class="form-control"
+                                                name="angkatan"
+                                                value="{{ old('angkatan', $item->angkatan) }}">
 
+                                            {{-- Error hanya muncul untuk modal edit kelas yang ID-nya cocok --}}
                                             @if (session('error_from') === 'edit_kelas' && session('edit_id') == $item->id)
-                                            @error('keterangan')
+                                            @error('angkatan')
                                             <div class="text-danger">{{ $message }}</div>
                                             @enderror
                                             @endif
@@ -136,13 +140,13 @@
                         @endif
                     </div>
 
-                    {{-- KETERANGAN --}}
+                    {{-- ANGKATAN --}}
                     <div class="mb-3">
-                        <label class="col-form-label">Keterangan</label>
-                        <textarea class="form-control" name="keterangan" rows="5">{{ old('keterangan') }}</textarea>
+                        <label class="col-form-label">Angkatan</label>
+                        <input type="text" class="form-control" name="angkatan" value="{{ old('angkatan') }}">
 
                         @if (session('error_from') === 'tambah_kelas')
-                        @error('keterangan')
+                        @error('angkatan')
                         <div class="text-danger">{{ $message }}</div>
                         @enderror
                         @endif

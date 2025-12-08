@@ -9,6 +9,7 @@ class Transaksi extends Model
     protected $table = 'transaksi';
 
     protected $fillable = [
+        'jenis_pembayaran_id',
         'tanggal',
         'siswa_id',
         'tipe',
@@ -27,5 +28,10 @@ class Transaksi extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function jenisPembayaran()
+    {
+        return $this->belongsTo(JenisPembayaran::class, 'jenis_pembayaran_id');
     }
 }

@@ -12,13 +12,93 @@
         {{ session('success') }}
     </div>
     @endif
+
+    {{-- PREVIEW IMPORT EXCEL --}}
+    @if(isset($preview) && count($preview) > 0)
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Preview Import Siswa</h5>
+        </div>
+
+        <div class="card-body">
+
+            {{-- ERROR BARIS --}}
+            @if(isset($errors_preview) && count($errors_preview) > 0)
+            <div class="alert alert-danger">
+                <strong>Beberapa error ditemukan:</strong><br>
+                @foreach($errors_preview as $e)
+                - {{ $e }} <br>
+                @endforeach
+            </div>
+            @endif
+
+            <form action="{{ route('siswa.import.confirm') }}" method="POST" id="confirmForm">
+                @csrf
+                <input type="hidden" name="file_path" value="{{ $file_path }}">
+
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>NIS</th>
+                            <th>Nama</th>
+                            <th>Kelas</th>
+                            <th>Angkatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($preview as $p)
+                        <tr>
+                            <td>
+                                @if($p['mode'] == 'insert')
+                                <span class="badge bg-success">Tambah</span>
+                                @else
+                                <span class="badge bg-warning">Update</span>
+                                @endif
+                            </td>
+                            <td>{{ $p['row']['nis'] }}</td>
+                            <td>{{ $p['row']['nama'] }}</td>
+                            <td>{{ $p['row']['kelas'] }}</td>
+                            <td>{{ $p['row']['angkatan'] }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <button class="btn btn-primary mt-3">Konfirmasi Import</button>
+                <a href="{{ route('siswa.index') }}" class="btn btn-secondary mt-3">Batal</a>
+            </form>
+
+        </div>
+    </div>
+    @endif
+
     <!-- Responsive Table -->
     <div class="card p-2">
-        <h5 class="card-header">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tambahSiswa">
-                Tambah Siswa
-            </button>
+        <h5 class="card-header d-flex justify-content-between">
+
+            <!-- Tombol kiri -->
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tambahSiswa">
+                    Tambah Siswa
+                </button>
+            </div>
+
+            <!-- Tombol kanan -->
+            <div>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importSiswa">
+                    <i class='bx bxs-file-import me-1'></i>
+                    Import Excel
+                </button>
+
+                <a href="{{ route('siswa.download.template') }}" class="btn btn-info">
+                    <i class='bx bxs-download me-1'></i>
+                    Download Template
+                </a>
+            </div>
+
         </h5>
+
         <div class="table-responsive text-nowrap">
             <table class="table table-bordered" id="table">
                 <thead>
@@ -54,6 +134,9 @@
                             </span>
                         </td>
                         <td>
+                            <a href="{{ route('siswa.riwayat', $item->id) }}" class="btn btn-info btn-sm">
+                                Riwayat
+                            </a>
                             <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editSiswa{{ $item->id }}">
                                 Edit
                             </button>
@@ -219,16 +302,16 @@
                         <select name="kelas_id" class="form-control">
                             <option value="">-- Pilih Kelas --</option>
                             @foreach($kelas as $k)
-                                <option value="{{ $k->id }}" {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
-                                    {{ $k->nama_kelas }}
-                                </option>
+                            <option value="{{ $k->id }}" {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
+                                {{ $k->nama_kelas }}
+                            </option>
                             @endforeach
                         </select>
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('kelas_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('kelas_id')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -238,9 +321,9 @@
                         <input type="text" class="form-control" name="nis" value="{{ old('nis') }}">
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('nis')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('nis')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -250,9 +333,9 @@
                         <input type="text" class="form-control" name="nama" value="{{ old('nama') }}">
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('nama')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('nama')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -262,9 +345,9 @@
                         <textarea class="form-control" name="alamat" rows="3">{{ old('alamat') }}</textarea>
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('alamat')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('alamat')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -274,9 +357,9 @@
                         <input type="text" class="form-control" name="nama_ortu" value="{{ old('nama_ortu') }}">
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('nama_ortu')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('nama_ortu')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -286,9 +369,9 @@
                         <input type="text" class="form-control" name="telp_ortu" value="{{ old('telp_ortu') }}">
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('telp_ortu')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('telp_ortu')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -302,9 +385,9 @@
                         </select>
 
                         @if (session('error_from') === 'tambah_siswa')
-                            @error('status')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        @error('status')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         @endif
                     </div>
 
@@ -318,6 +401,33 @@
             </form>
 
         </div>
+    </div>
+</div>
+
+<!-- Modal Import -->
+<div class="modal fade" id="importSiswa" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ route('siswa.import.preview') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title">Import Data Siswa dari Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <label class="form-label">Pilih File Excel</label>
+                <input type="file" name="file" class="form-control" required>
+
+                <p class="mt-2 text-muted">
+                    Format kolom wajib:
+                    <br> nama, nis, kelas, angkatan, alamat, nama_ortu, telp_ortu, status
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Import</button>
+            </div>
+        </form>
     </div>
 </div>
 

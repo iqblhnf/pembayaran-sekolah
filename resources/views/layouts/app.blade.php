@@ -159,6 +159,12 @@
                             <div data-i18n="Siswa">Siswa</div>
                         </a>
                     </li>
+                    <li class="menu-item {{ request()->routeIs('jenis-pembayaran.*') ? 'active' : '' }}">
+                        <a href="{{ route('jenis-pembayaran.index') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-list-check"></i>
+                            <div data-i18n="Siswa">Jenis Pembayaran</div>
+                        </a>
+                    </li>
                     <li class="menu-item {{ request()->routeIs('transaksi.masuk') ? 'active' : '' }}">
                         <a href="{{ route('transaksi.masuk') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-wallet"></i>

@@ -26,6 +26,7 @@
                     <tr>
                         <th>#</th>
                         <th>Tanggal</th>
+                        <th>Jenis Pembayaran</th>
                         <th>Siswa</th>
                         <th>Kelas</th>
                         <th>Deskripsi</th>
@@ -41,6 +42,7 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $item->tanggal }}</td>
+                        <td>{{ $item->jenisPembayaran->nama_pembayaran }}</td>
                         <td>{{ $item->siswa->nama ?? '-' }}</td>
                         <td>{{ $item->siswa->kelas->nama_kelas ?? '-' }}</td>
                         <td>{{ $item->deskripsi }}</td>
@@ -93,6 +95,27 @@
                                     <input type="hidden" name="tipe" value="masuk">
 
                                     <div class="modal-body">
+
+                                        {{-- JENIS PEMBAYARAN --}}
+                                        <div class="mb-3">
+                                            <label class="form-label">Jenis Pembayaran</label>
+                                            <select name="jenis_pembayaran_id" class="form-control">
+                                                <option value="">-- Pilih Jenis Pembayaran --</option>
+
+                                                @foreach($jenis_pembayaran as $jp)
+                                                <option value="{{ $jp->id }}"
+                                                    {{ old('jenis_pembayaran_id', $item->jenis_pembayaran_id) == $jp->id ? 'selected' : '' }}>
+                                                    {{ $jp->nama_pembayaran }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+
+                                            @if(session('error_from') === 'edit_transaksi' && session('edit_id') == $item->id)
+                                            @error('jenis_pembayaran_id')
+                                            <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                            @endif
+                                        </div>
 
                                         {{-- TANGGAL --}}
                                         <div class="mb-3">
@@ -210,6 +233,26 @@
                 <input type="hidden" name="tipe" value="masuk">
 
                 <div class="modal-body">
+
+                    {{-- JENIS PEMBAYARAN --}}
+                    <div class="mb-3">
+                        <label class="form-label">Jenis Pembayaran</label>
+                        <select name="jenis_pembayaran_id" id="select-jenis-pembayaran" class="form-control">
+                            <option value="">-- Pilih Jenis Pembayaran --</option>
+
+                            @foreach($jenis_pembayaran as $jp)
+                            <option value="{{ $jp->id }}" {{ old('jenis_pembayaran_id') == $jp->id ? 'selected' : '' }}>
+                                {{ $jp->nama_pembayaran }}
+                            </option>
+                            @endforeach
+                        </select>
+
+                        @if(session('error_from') === 'tambah_transaksi')
+                        @error('jenis_pembayaran_id')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                        @endif
+                    </div>
 
                     {{-- TANGGAL --}}
                     <div class="mb-3">

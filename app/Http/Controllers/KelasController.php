@@ -32,7 +32,7 @@ class KelasController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama_kelas' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
+            'angkatan' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -70,7 +70,7 @@ class KelasController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama_kelas' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
+            'angkatan' => 'required|string',
         ]);
 
         if ($validator->fails()) {
