@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/siswa/import-confirm', [SiswaController::class, 'importConfirm'])->name('siswa.import.confirm');
     Route::get('/siswa/download-template', [SiswaController::class, 'downloadTemplate'])->name('siswa.download.template');
     Route::get('/siswa/{id}/riwayat', [SiswaController::class, 'riwayat'])->name('siswa.riwayat');
-    
+
     Route::resource('siswa', SiswaController::class);
 
     Route::resource('jenis-pembayaran', JenisPembayaranController::class);
@@ -42,4 +42,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/buku-kas/print', [TransaksiController::class, 'print'])->name('bukuKas.print');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/backup/sqlite', function () {
+
+        $path = database_path('database.sqlite');
+
+        if (!file_exists($path)) {
+            abort(404, 'File database tidak ditemukan.');
+        }
+
+        // Nama file backup (pakai timestamp agar unik)
+        $fileName = 'backup_sqlite_' . date('Y-m-d_H-i-s') . '.sqlite';
+
+        return response()->download($path, $fileName);
+    })->name('backup.sqlite');
 });

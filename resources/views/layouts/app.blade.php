@@ -184,6 +184,12 @@
                         </a>
                     </li>
                 </ul>
+                <!-- Tombol di bawah tengah -->
+                <div class="p-3 text-center">
+                    <a href="{{ route('backup.sqlite') }}" class="btn btn-primary w-100">
+                        <i class="bx bx-data me-1"></i> Backup Database
+                    </a>
+                </div>
             </aside>
             <!-- / Menu -->
 
