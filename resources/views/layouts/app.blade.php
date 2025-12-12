@@ -193,6 +193,24 @@
                         <i class="bx bx-data me-1"></i> Backup Database
                     </a>
                 </div>
+                <!-- Tombol Logout -->
+                <div class="p-3 text-center">
+                    <button type="button" class="btn btn-danger w-100" onclick="confirmLogout()">
+                        <i class="bx bx-log-out me-1"></i> Logout
+                    </button>
+
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
+                </div>
+
+                <script>
+                    function confirmLogout() {
+                        if (confirm('Yakin ingin logout?')) {
+                            document.getElementById('logout-form').submit();
+                        }
+                    }
+                </script>
             </aside>
             <!-- / Menu -->
 
