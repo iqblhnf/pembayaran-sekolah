@@ -18,9 +18,95 @@ class SiswaController extends Controller
      */
     public function index()
     {
-        $siswa = Siswa::with('kelas')->get();
-        $kelas = Kelas::all();
-        return view('admin.siswa.index', compact('siswa', 'kelas'));
+        $kelas = Kelas::all(); // WAJIB dikirim
+
+        return view('admin.siswa.index', compact('kelas'));
+    }
+
+    public function data(Request $request)
+    {
+        $columns = [
+            0 => 'id',
+            1 => 'nama',
+            2 => 'nis',
+            3 => 'kelas_id',
+            4 => 'alamat',
+            5 => 'nama_ortu',
+            6 => 'telp_ortu',
+            7 => 'status'
+        ];
+
+        $totalData = Siswa::count();
+        $totalFiltered = $totalData;
+
+        $limit  = $request->input('length');
+        $start  = $request->input('start');
+        $order  = $columns[$request->input('order.0.column')];
+        $dir    = $request->input('order.0.dir');
+        $search = $request->input('search.value');
+
+        $query = Siswa::with('kelas');
+
+        // PENCARIAN
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'LIKE', "%{$search}%")
+                    ->orWhere('nis', 'LIKE', "%{$search}%")
+                    ->orWhere('alamat', 'LIKE', "%{$search}%")
+                    ->orWhere('nama_ortu', 'LIKE', "%{$search}%")
+                    ->orWhere('telp_ortu', 'LIKE', "%{$search}%")
+                    ->orWhereHas('kelas', function ($k) use ($search) {
+                        $k->where('nama_kelas', 'LIKE', "%{$search}%");
+                    });
+            });
+
+            $totalFiltered = $query->count();
+        }
+
+        $siswa = $query->offset($start)
+            ->limit($limit)
+            ->orderBy($order, $dir)
+            ->get();
+
+        $data = [];
+        $no = $start + 1;
+
+        foreach ($siswa as $s) {
+            $badge = '<span class="badge bg-'
+                . ($s->status == 'aktif' ? 'success' : ($s->status == 'lulus' ? 'primary' : 'danger'))
+                . '">' . ucfirst($s->status) . '</span>';
+
+            $aksi = '
+            <a href="' . route('siswa.riwayat', $s->id) . '" 
+                class="btn btn-info btn-sm">
+                Riwayat
+            </a>
+            <button class="btn btn-warning btn-sm btn-edit" data-id="' . $s->id . '">Edit</button>
+            <form action="/siswa/' . $s->id . '" method="POST" class="d-inline" onsubmit="return confirm(\'Yakin ingin hapus?\')">
+                ' . csrf_field() . method_field("DELETE") . '
+                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+            </form>
+        ';
+
+            $data[] = [
+                $no++,
+                $s->nama,
+                $s->nis,
+                $s->kelas->nama_kelas ?? '-',
+                $s->alamat ?? '-',
+                $s->nama_ortu ?? '-',
+                $s->telp_ortu ?? '-',
+                $badge,
+                $aksi,
+            ];
+        }
+
+        return response()->json([
+            "draw"            => intval($request->input('draw')),
+            "recordsTotal"    => $totalData,
+            "recordsFiltered" => $totalFiltered,
+            "data"            => $data
+        ]);
     }
 
     /**
@@ -49,6 +135,7 @@ class SiswaController extends Controller
         if ($validator->fails()) {
             return back()
                 ->withErrors($validator)
+                ->withInput()
                 ->with('error_from', 'tambah_siswa');
         }
 
@@ -62,7 +149,7 @@ class SiswaController extends Controller
      */
     public function show(Siswa $siswa)
     {
-        //
+        return response()->json($siswa);
     }
 
     /**
@@ -91,6 +178,7 @@ class SiswaController extends Controller
         if ($validator->fails()) {
             return back()
                 ->withErrors($validator)
+                ->withInput()
                 ->with('error_from', 'edit_siswa')
                 ->with('edit_id', $siswa->id);
         }

@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('transaksi', function (Blueprint $table) {
             $table->id();
-            
-            $table->foreignId('jenis_pembayaran_id')
-                ->constrained('jenis_pembayarans')
-                ->cascadeOnDelete();
 
-            $table->date('tanggal');
+            $table->string('kode_transaksi')->unique();
+
+            $table->json('jenis_pembayaran_id')->nullable();
+
+            $table->datetime('tanggal');
 
             $table->foreignId('siswa_id')
                 ->nullable()
@@ -26,14 +26,14 @@ return new class extends Migration
                 ->nullOnDelete();
 
             $table->enum('tipe', ['masuk', 'keluar']);
-            $table->string('deskripsi');
             $table->decimal('nominal', 12, 2);
-            $table->enum('metode', ['tunai', 'transfer'])->nullable();
+            $table->enum('metode', ['tunai', 'transfer'])->default('tunai');
 
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->cascadeOnDelete();
 
+            $table->json('nominal_detail')->nullable();
             $table->text('keterangan')->nullable();
 
             $table->timestamps();

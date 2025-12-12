@@ -27,23 +27,26 @@
                     <tr>
                         <th>#</th>
                         <th>Tanggal</th>
+                        <th>Kode Transaksi</th>
                         <th>Jenis Pembayaran</th>
-                        <th>Deskripsi</th>
                         <th>Nominal</th>
                         <th>Metode</th>
-                        <th>Keterangan</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($riwayat as $item)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y') }}</td>
-                        <td>{{ $item->jenisPembayaran->nama_pembayaran ?? '-' }}</td>
-                        <td>{{ $item->deskripsi }}</td>
+                        <td>{{ \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y H:i') }}</td>
+                        <td>{{ $item->kode_transaksi }}</td>
+                        @php
+                        $jenis_ids = json_decode($item->jenis_pembayaran_id, true);
+                        $jenisList = \App\Models\JenisPembayaran::whereIn('id', $jenis_ids)->pluck('nama_pembayaran')->toArray();
+                        @endphp
+
+                        <td>{{ implode(', ', $jenisList) }}</td>
                         <td>Rp {{ number_format($item->nominal, 0, ',', '.') }}</td>
                         <td>{{ ucfirst($item->metode) ?? '-' }}</td>
-                        <td>{{ $item->keterangan ?? '-' }}</td>
                     </tr>
                     @empty
                     <tr>

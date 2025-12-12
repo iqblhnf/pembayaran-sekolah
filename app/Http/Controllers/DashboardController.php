@@ -17,131 +17,126 @@ class DashboardController extends Controller
         // nilai: gabungan | masuk | keluar
 
         /* ========================================================
-         * TOTAL PEMASUKAN / PENGELUARAN
-         * ====================================================== */
+     * TOTAL PEMASUKAN / PENGELUARAN
+     * ====================================================== */
         $totalMasuk  = Transaksi::where('tipe', 'masuk')->whereYear('tanggal', $tahun)->sum('nominal');
         $totalKeluar = Transaksi::where('tipe', 'keluar')->whereYear('tanggal', $tahun)->sum('nominal');
         $saldoAkhir  = $totalMasuk - $totalKeluar;
 
+        /* ========================================================
+     * (DISABLED) MINGGUAN — DIKOMENTAR SESUAI PERMINTAAN
+     * ====================================================== */
         /*
-        |--------------------------------------------------------------------------
-        | MINGGUAN (Menyesuaikan filter: gabungan/masuk/keluar)
-        |--------------------------------------------------------------------------
-        */
-        $weeklyQuery = Transaksi::select(
-            DB::raw("strftime('%w', tanggal) AS hari"),
-            DB::raw("SUM(nominal) AS total")
-        )->whereYear('tanggal', $tahun);
+    $weeklyQuery = Transaksi::select(
+        DB::raw("strftime('%w', tanggal) AS hari"),
+        DB::raw("SUM(nominal) AS total")
+    )->whereYear('tanggal', $tahun);
 
-        if ($filterTipe !== 'gabungan') {
-            $weeklyQuery->where('tipe', $filterTipe);
-        }
+    if ($filterTipe !== 'gabungan') {
+        $weeklyQuery->where('tipe', $filterTipe);
+    }
 
-        $weeklyRaw = $weeklyQuery
-            ->groupBy(DB::raw("strftime('%w', tanggal)"))
-            ->get();
+    $weeklyRaw = $weeklyQuery
+        ->groupBy(DB::raw("strftime('%w', tanggal)"))
+        ->get();
 
-        $weeklyLabels = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-        $weeklyData = array_fill(0, 7, 0);
+    $weeklyLabels = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    $weeklyData = array_fill(0, 7, 0);
 
-        foreach ($weeklyRaw as $row) {
-            $weeklyData[(int)$row->hari] = $row->total;
-        }
+    foreach ($weeklyRaw as $row) {
+        $weeklyData[(int)$row->hari] = $row->total;
+    }
+    */
 
+        /* ========================================================
+     * (DISABLED) PER KELAS — DIKOMENTAR
+     * ====================================================== */
         /*
-        |--------------------------------------------------------------------------
-        | PER KELAS
-        |--------------------------------------------------------------------------
-        */
-        $kelasQuery = DB::table('transaksi')
-            ->join('siswa', 'siswa.id', '=', 'transaksi.siswa_id')
-            ->join('kelas', 'kelas.id', '=', 'siswa.kelas_id')
-            ->select('kelas.nama_kelas', DB::raw("SUM(transaksi.nominal) AS total"))
-            ->whereYear('transaksi.tanggal', $tahun);
+    $kelasQuery = DB::table('transaksi')
+        ->join('siswa', 'siswa.id', '=', 'transaksi.siswa_id')
+        ->join('kelas', 'kelas.id', '=', 'siswa.kelas_id')
+        ->select('kelas.nama_kelas', DB::raw("SUM(transaksi.nominal) AS total"))
+        ->whereYear('transaksi.tanggal', $tahun);
 
-        if ($filterTipe !== 'gabungan') {
-            $kelasQuery->where('transaksi.tipe', $filterTipe);
-        }
+    if ($filterTipe !== 'gabungan') {
+        $kelasQuery->where('transaksi.tipe', $filterTipe);
+    }
 
-        $kelasRaw = $kelasQuery
-            ->groupBy('kelas.id')
-            ->orderBy('total', 'DESC')
-            ->get();
+    $kelasRaw = $kelasQuery
+        ->groupBy('kelas.id')
+        ->orderBy('total', 'DESC')
+        ->get();
 
-        $kelasLabels = $kelasRaw->pluck('nama_kelas')->toArray();
-        $kelasTotals = $kelasRaw->pluck('total')->toArray();
+    $kelasLabels = $kelasRaw->pluck('nama_kelas')->toArray();
+    $kelasTotals = $kelasRaw->pluck('total')->toArray();
+    */
 
+        /* ========================================================
+     * (DISABLED) JENIS TRANSAKSI — DIKOMENTAR
+     * ====================================================== */
         /*
-        |--------------------------------------------------------------------------
-        | JENIS TRANSAKSI (kata pertama deskripsi)
-        |--------------------------------------------------------------------------
-        */
-        $jenisQuery = Transaksi::select(
-            DB::raw("
-                LOWER(
-                    CASE
-                        WHEN instr(deskripsi, ' ') > 0
-                            THEN substr(deskripsi, 1, instr(deskripsi,' ') - 1)
-                        ELSE deskripsi
-                    END
-                ) AS kategori
-            "),
-            DB::raw("SUM(nominal) AS total")
-        )
-            ->whereYear('tanggal', $tahun);
+    $jenisQuery = Transaksi::select(
+        DB::raw("
+            CASE 
+                WHEN tipe = 'masuk' THEN 'pemasukan'
+                WHEN tipe = 'keluar' THEN 'pengeluaran'
+            END AS kategori
+        "),
+        DB::raw("SUM(nominal) AS total")
+    )
+        ->whereYear('tanggal', $tahun);
 
-        if ($filterTipe !== 'gabungan') {
-            $jenisQuery->where('tipe', $filterTipe);
-        }
+    if ($filterTipe !== 'gabungan') {
+        $jenisQuery->where('tipe', $filterTipe);
+    }
 
-        $jenisRaw = $jenisQuery->groupBy('kategori')->get();
-        $jenisLabels = $jenisRaw->pluck('kategori')->toArray();
-        $jenisTotals = $jenisRaw->pluck('total')->toArray();
+    $jenisRaw = $jenisQuery->groupBy('kategori')->get();
+    $jenisLabels = $jenisRaw->pluck('kategori')->toArray();
+    $jenisTotals = $jenisRaw->pluck('total')->toArray();
+    */
 
+        /* ========================================================
+     * (DISABLED) METODE PEMBAYARAN — DIKOMENTAR
+     * ====================================================== */
         /*
-        |--------------------------------------------------------------------------
-        | METODE PEMBAYARAN
-        |--------------------------------------------------------------------------
-        */
-        $metodeQuery = Transaksi::select('metode', DB::raw("SUM(nominal) AS total"))
-            ->whereYear('tanggal', $tahun);
+    $metodeQuery = Transaksi::select('metode', DB::raw("SUM(nominal) AS total"))
+        ->whereYear('tanggal', $tahun);
 
-        if ($filterTipe !== 'gabungan') {
-            $metodeQuery->where('tipe', $filterTipe);
-        }
+    if ($filterTipe !== 'gabungan') {
+        $metodeQuery->where('tipe', $filterTipe);
+    }
 
-        $metodeRaw = $metodeQuery->groupBy('metode')->get();
-        $metodeLabels = $metodeRaw->pluck('metode')->toArray();
-        $metodeTotals = $metodeRaw->pluck('total')->toArray();
+    $metodeRaw = $metodeQuery->groupBy('metode')->get();
+    $metodeLabels = $metodeRaw->pluck('metode')->toArray();
+    $metodeTotals = $metodeRaw->pluck('total')->toArray();
+    */
 
+        /* ========================================================
+     * (DISABLED) PER SISWA — DIKOMENTAR
+     * ====================================================== */
         /*
-        |--------------------------------------------------------------------------
-        | PER SISWA (TOP 10)
-        |--------------------------------------------------------------------------
-        */
-        $siswaQuery = DB::table('transaksi')
-            ->join('siswa', 'siswa.id', '=', 'transaksi.siswa_id')
-            ->select('siswa.nama', DB::raw("SUM(transaksi.nominal) AS total"))
-            ->whereYear('transaksi.tanggal', $tahun);
+    $siswaQuery = DB::table('transaksi')
+        ->join('siswa', 'siswa.id', '=', 'transaksi.siswa_id')
+        ->select('siswa.nama', DB::raw("SUM(transaksi.nominal) AS total"))
+        ->whereYear('transaksi.tanggal', $tahun);
 
-        if ($filterTipe !== 'gabungan') {
-            $siswaQuery->where('transaksi.tipe', $filterTipe);
-        }
+    if ($filterTipe !== 'gabungan') {
+        $siswaQuery->where('transaksi.tipe', $filterTipe);
+    }
 
-        $siswaRaw = $siswaQuery
-            ->groupBy('siswa.id')
-            ->orderBy('total', 'DESC')
-            ->limit(10)
-            ->get();
+    $siswaRaw = $siswaQuery
+        ->groupBy('siswa.id')
+        ->orderBy('total', 'DESC')
+        ->limit(10)
+        ->get();
 
-        $siswaLabels = $siswaRaw->pluck('nama')->toArray();
-        $siswaTotals = $siswaRaw->pluck('total')->toArray();
+    $siswaLabels = $siswaRaw->pluck('nama')->toArray();
+    $siswaTotals = $siswaRaw->pluck('total')->toArray();
+    */
 
-        /*
-        |--------------------------------------------------------------------------
-        | BULANAN MASUK & KELUAR
-        |--------------------------------------------------------------------------
-        */
+        /* ========================================================
+     * BULANAN MASUK & KELUAR — (DIPAKAI)
+     * ====================================================== */
         // Data masuk
         $monthlyMasukRaw = Transaksi::select(
             DB::raw("strftime('%m', tanggal) AS bulan"),
@@ -175,45 +170,35 @@ class DashboardController extends Controller
             $monthKeluarData[(int)$m->bulan - 1] = $m->total;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Jika filter = MASUK saja → hanya ambil data masuk
-        | Jika filter = KELUAR saja → hanya ambil data keluar
-        | Jika gabungan → dua-duanya
-        |--------------------------------------------------------------------------
-        */
+        /* ========================================================
+     * DATA BULANAN SESUAI FILTER
+     * ====================================================== */
         if ($filterTipe === 'masuk') {
             $monthData = $monthMasukData;
         } elseif ($filterTipe === 'keluar') {
             $monthData = $monthKeluarData;
         } else {
-            // gabungan → tetap kirim 2 series ke blade
+            // gabungan → nilai NULL, nanti Blade pakai dua series
             $monthData = null;
         }
 
         /* ========================================================
-         * RETURN VIEW
-         * ====================================================== */
+     * RETURN VIEW (Hanya yang dipakai tetap dikirim)
+     * ====================================================== */
         return view('admin.dashboard', compact(
             'tahun',
             'filterTipe',
             'totalMasuk',
             'totalKeluar',
             'saldoAkhir',
-            'weeklyLabels',
-            'weeklyData',
-            'kelasLabels',
-            'kelasTotals',
-            'jenisLabels',
-            'jenisTotals',
-            'metodeLabels',
-            'metodeTotals',
-            'siswaLabels',
-            'siswaTotals',
+
+            // BULANAN (dipakai)
             'monthLabels',
             'monthData',
             'monthMasukData',
             'monthKeluarData'
+
+            // Semua variable lain tidak dikirim karena tidak dipakai
         ));
     }
 }

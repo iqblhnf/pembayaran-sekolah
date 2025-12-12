@@ -127,7 +127,7 @@ if ($number < 12) {
 
                 <div style="display: flex; gap: 3px;">
                     No:
-                    <span class="">{{ $no_urut }}</span>
+                    <span class="">{{ $t->kode_transaksi }}</span>
                 </div>
 
                 <div style="display: flex; gap: 3px; margin-bottom: 10px;">
@@ -163,7 +163,7 @@ if ($number < 12) {
 
                 <div class="space" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                     <div style="width:48%;">
-                        No: <span class="" style="width: 50%;">{{ $no_urut }}</span>
+                        No: <span class="" style="width: 50%;">{{ $t->kode_transaksi }}</span>
                     </div>
 
                     <div style="width:48%; text-align:right;">

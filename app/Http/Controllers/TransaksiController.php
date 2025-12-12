@@ -26,13 +26,104 @@ class TransaksiController extends Controller
      */
     public function indexMasuk()
     {
-        return view('admin.transaksi.masuk.index', [
-            'transaksi' => Transaksi::with('siswa')
-                ->where('tipe', 'masuk')
-                ->latest()
-                ->get(),
-            'siswa' => Siswa::orderBy('nama')->get(),
-            'jenis_pembayaran' => JenisPembayaran::orderBy('nama_pembayaran')->get(),
+        return view('admin.transaksi.masuk.index');
+    }
+
+    public function dataMasuk(Request $request)
+    {
+        $columns = [
+            'id',
+            'tanggal',
+            'kode_transaksi',
+            'jenis_pembayaran_id',
+            'siswa_id',
+            'nominal'
+        ];
+
+        $search = $request->input('search.value');
+        $orderColumnIndex = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+        $orderColumn = $columns[$orderColumnIndex] ?? 'id';
+
+        // Query awal
+        $query = Transaksi::with(['siswa.kelas'])
+            ->where('tipe', 'masuk');
+
+        // Filtering
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('kode_transaksi', 'like', "%$search%")
+                    ->orWhere('nominal', 'like', "%$search%")
+
+                    // cari di siswa.nama
+                    ->orWhereHas('siswa', function ($qs) use ($search) {
+                        $qs->where('nama', 'like', "%$search%");
+                    })
+
+                    // cari di siswa.kelas.nama_kelas
+                    ->orWhereHas('siswa.kelas', function ($qc) use ($search) {
+                        $qc->where('nama_kelas', 'like', "%$search%");
+                    });
+            });
+        }
+
+        $recordsTotal = Transaksi::where('tipe', 'masuk')->count();
+        $recordsFiltered = $query->count();
+
+        // Pagination
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+
+        $data = $query
+            ->orderBy($orderColumn, $orderDir)
+            ->skip($start)
+            ->take($length)
+            ->get();
+
+        // Format data untuk DataTables
+        $result = [];
+        foreach ($data as $index => $item) {
+            $jenis_ids = json_decode($item->jenis_pembayaran_id, true);
+            $jenisList = \App\Models\JenisPembayaran::whereIn('id', $jenis_ids)->pluck('nama_pembayaran')->toArray();
+
+            $result[] = [
+                $start + $index + 1,
+                $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y H:i') : '-',
+                $item->kode_transaksi,
+                implode(', ', $jenisList),
+                $item->siswa->nama ?? '-',
+                $item->siswa->kelas->nama_kelas ?? '-',
+                "Rp " . number_format($item->nominal, 0, ',', '.'),
+                '<a href="' . route('transaksi.kwitansi', $item->id) . '" class="btn btn-info btn-sm" target="_blank">Cetak</a>',
+                '
+                <div class="dropdown">
+                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow"
+                            data-bs-toggle="dropdown">
+                        <i class="bx bx-dots-vertical-rounded"></i>
+                    </button>
+
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="' . route('transaksi.masuk.edit', $item->id) . '">
+                            <i class="bx bx-edit-alt me-1"></i> Edit
+                        </a>
+
+                        <form action="' . route('transaksi.destroy', $item->id) . '"
+                              method="POST" class="d-inline"
+                              onsubmit="return confirm(\'Yakin ingin hapus?\')">
+                            ' . csrf_field() . method_field('DELETE') . '
+                            <button class="dropdown-item text-danger"><i class="bx bx-trash me-1"></i> Hapus</button>
+                        </form>
+                    </div>
+                </div>
+            '
+            ];
+        }
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $result,
         ]);
     }
 
@@ -41,21 +132,133 @@ class TransaksiController extends Controller
      */
     public function indexKeluar()
     {
-        return view('admin.transaksi.keluar.index', [
-            'transaksi' => Transaksi::with('siswa')
-                ->where('tipe', 'keluar')
-                ->latest()
-                ->get(),
-            // 'siswa' => Siswa::orderBy('nama')->get(),
+        return view('admin.transaksi.keluar.index');
+    }
+
+    public function dataKeluar(Request $request)
+    {
+        $columns = [
+            'id',
+            'tanggal',
+            'kode_transaksi',
+            'nominal',
+            'keterangan'
+        ];
+
+        $search = $request->input('search.value');
+        $orderColumnIndex = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+        $orderColumn = $columns[$orderColumnIndex] ?? 'id';
+
+        $query = Transaksi::where('tipe', 'keluar');
+
+        // SEARCH
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('kode_transaksi', 'like', "%$search%")
+                    ->orWhere('nominal', 'like', "%$search%")
+                    ->orWhere('keterangan', 'like', "%$search%");
+            });
+        }
+
+        $recordsTotal = Transaksi::where('tipe', 'keluar')->count();
+        $recordsFiltered = $query->count();
+
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+
+        $data = $query->orderBy($orderColumn, $orderDir)
+            ->skip($start)
+            ->take($length)
+            ->get();
+
+        $result = [];
+
+        foreach ($data as $index => $item) {
+
+            // Button CETAK (tombol biru seperti gambar)
+            $cetak = '
+            <a href="' . route('transaksi.kwitansi', $item->id) . '"
+                class="btn btn-info btn-sm"
+                style="background:#04C8FF; border-color:#04C8FF;"
+                target="_blank">
+                Cetak
+            </a>
+        ';
+
+            // Dropdown Aksi (edit + hapus)
+            $aksi = '
+        <div class="dropdown">
+            <button type="button" class="btn p-0 dropdown-toggle hide-arrow"
+                data-bs-toggle="dropdown">
+                <i class="bx bx-dots-vertical-rounded"></i>
+            </button>
+
+            <div class="dropdown-menu">
+
+                <a href="#" 
+                    class="dropdown-item btn-edit" 
+                    data-id="' . $item->id . '">
+                    <i class="bx bx-edit-alt me-1"></i> Edit
+                </a>
+
+                <form action="' . route('transaksi.destroy', $item->id) . '"
+                    method="POST"
+                    onsubmit="return confirm(\'Yakin ingin hapus?\')"
+                    class="d-inline">
+
+                    ' . csrf_field() . method_field('DELETE') . '
+
+                    <button class="dropdown-item text-danger">
+                        <i class="bx bx-trash me-1"></i> Hapus
+                    </button>
+                </form>
+
+            </div>
+        </div>';
+
+            $result[] = [
+                $start + $index + 1,
+                \Carbon\Carbon::parse($item->tanggal)->format('d-m-Y H:i'),
+                $item->kode_transaksi,
+                "Rp " . number_format($item->nominal, 0, ',', '.'),
+                $item->keterangan ?? '-',
+                $cetak,        // kolom baru
+                $aksi          // kolom aksi
+            ];
+        }
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $result,
         ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function createMasuk()
     {
-        //
+        return view('admin.transaksi.masuk.create', [
+            'siswa' => Siswa::orderBy('nama')->get(),
+            'jenis_pembayaran' => JenisPembayaran::orderBy('nama_pembayaran')->get(),
+        ]);
+    }
+
+    // === GENERATE KODE TRANSAKSI ===
+    private function generateKodeTransaksi()
+    {
+        $today = now()->format('Ymd');
+
+        // Hitung transaksi hari ini
+        $countToday = Transaksi::whereDate('tanggal', now()->toDateString())->count() + 1;
+
+        // Format nomor urut 4 digit
+        $urut = str_pad($countToday, 4, '0', STR_PAD_LEFT);
+
+        return "TRX-$today-$urut";
     }
 
     /**
@@ -63,65 +266,142 @@ class TransaksiController extends Controller
      */
     public function store(Request $request)
     {
-        // Hapus titik pada nominal
-        $cleanNominal = str_replace('.', '', $request->nominal);
-        $request->merge(['nominal' => $cleanNominal]);
-
-        // RULE DASAR
+        // ==============================
+        // VALIDATION RULES DASAR
+        // ==============================
         $rules = [
-            'tanggal'   => 'required|date',
-            'tipe'      => 'required|in:masuk,keluar',
-            'deskripsi' => 'required|string|max:255',
-            'nominal'   => 'required|numeric|min:1',
+            'tanggal' => 'required|date',
+            'tipe'    => 'required|in:masuk,keluar',
             'keterangan' => 'nullable|string',
-
-            // WAJIB UNTUK SEMUA TRANSAKSI
-            'jenis_pembayaran_id' => 'required|exists:jenis_pembayarans,id',
         ];
 
-        // VALIDASI TAMBAHAN KHUSUS PEMASUKAN
+        // ==============================
+        // VALIDASI KHUSUS TIPE MASUK
+        // ==============================
         if ($request->tipe === 'masuk') {
-            $rules['siswa_id'] = 'nullable|exists:siswa,id';
-            $rules['metode']   = 'nullable|in:tunai,transfer';
+
+            $rules['siswa_id'] = 'required|exists:siswa,id';
+            $rules['metode']   = 'required|in:tunai,transfer';
+
+            // jenis pembayaran array
+            $rules['jenis_pembayaran_id']   = 'required|array|min:1';
+            $rules['jenis_pembayaran_id.*'] = 'exists:jenis_pembayarans,id';
+
+            // nominal per jenis array
+            $rules['nominal']   = 'required|array';
+            $rules['nominal.*'] = 'required';
         }
 
+        // ==============================
+        // VALIDASI KHUSUS TIPE KELUAR
+        // ==============================
+        if ($request->tipe === 'keluar') {
+            // nominal hanya angka biasa
+            $rules['nominal'] = 'required';
+        }
+
+        // Jalankan validator
         $validator = Validator::make($request->all(), $rules);
+
+        // ATTR NAMA UNTUK NOMINAL TIPE MASUK
+        if ($request->tipe === 'masuk') {
+            $attributeNames = [];
+            foreach ($request->jenis_pembayaran_id ?? [] as $jpID) {
+                $nama = \App\Models\JenisPembayaran::find($jpID)->nama_pembayaran ?? 'Nominal';
+                $attributeNames["nominal.$jpID"] = "Nominal $nama";
+            }
+            $validator->setAttributeNames($attributeNames);
+        }
 
         if ($validator->fails()) {
             return back()
                 ->withErrors($validator)
-                ->with('error_from', 'tambah_transaksi');
+                ->with('error_from', 'tambah_transaksi')
+                ->withInput();
         }
 
         $data = $validator->validated();
 
-        // Jika pengeluaran → kosongkan siswa dan metode
-        if ($request->tipe === 'keluar') {
-            $data['siswa_id'] = null;
-            $data['metode'] = null;
+        // ==============================
+        // PROSES TIPE MASUK
+        // ==============================
+        if ($request->tipe === 'masuk') {
+
+            // Bersihkan nominal (hilangkan titik)
+            $cleanNominal = [];
+            foreach ($request->nominal as $key => $value) {
+                $cleanNominal[$key] = (int) str_replace('.', '', $value);
+            }
+
+            // Hitung total nominal
+            $total_nominal = array_sum($cleanNominal);
+
+            // Simpan data array
+            $data['jenis_pembayaran_id'] = json_encode($request->jenis_pembayaran_id);
+            $data['nominal_detail']      = json_encode($cleanNominal);
+
+            // Kolom nominal utama = total
+            $data['nominal'] = $total_nominal;
         }
 
+        // ==============================
+        // PROSES TIPE KELUAR
+        // ==============================
+        if ($request->tipe === 'keluar') {
+
+            $data['siswa_id'] = null;
+            // $data['metode']   = null;
+
+            // nominal langsung angka (bukan total dari array)
+            $data['nominal'] = (int) str_replace('.', '', $request->nominal);
+
+            // kolom array set null
+            $data['jenis_pembayaran_id'] = null;
+            $data['nominal_detail'] = null;
+        }
+
+        // Tambahkan kode transaksi otomatis
+        $data['kode_transaksi'] = $this->generateKodeTransaksi();
+
+        // siapa yang buat
         $data['created_by'] = auth()->id();
 
+        // SIMPAN
         Transaksi::create($data);
 
-        return back()->with('success', 'Transaksi berhasil ditambahkan.');
+        $route = $request->tipe === 'masuk' ? 'transaksi.masuk' : 'transaksi.keluar';
+
+        return redirect()->route($route)->with('success', 'Transaksi berhasil ditambahkan.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Transaksi $transaksi)
+    public function show($id)
     {
-        //
+        $transaksi = Transaksi::findOrFail($id);
+        return response()->json($transaksi);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Transaksi $transaksi)
+    public function editMasuk($id)
     {
-        //
+        $transaksi = Transaksi::findOrFail($id);
+
+        $jenis_pembayaran = JenisPembayaran::all();
+        $siswa = Siswa::orderBy('nama')->get();
+
+        // JSON decode detail nominal
+        $detail = json_decode($transaksi->nominal_detail, true) ?? [];
+
+        return view('admin.transaksi.masuk.edit', [
+            'transaksi' => $transaksi,
+            'jenis_pembayaran' => $jenis_pembayaran,
+            'detail' => $detail,
+            'siswa' => $siswa
+        ]);
     }
 
     /**
@@ -129,48 +409,135 @@ class TransaksiController extends Controller
      */
     public function update(Request $request, Transaksi $transaksi)
     {
-        // Hapus titik pada nominal
-        $cleanNominal = str_replace('.', '', $request->nominal);
-        $request->merge(['nominal' => $cleanNominal]);
-
-        // RULE DASAR
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDATION RULES DASAR
+    |--------------------------------------------------------------------------
+    */
         $rules = [
-            'tanggal'   => 'required|date',
-            'tipe'      => 'required|in:masuk,keluar',
-            'deskripsi' => 'required|string|max:255',
-            'nominal'   => 'required|numeric|min:1',
+            'tanggal'    => 'required|date',
+            'tipe'       => 'required|in:masuk,keluar',
             'keterangan' => 'nullable|string',
-
-            // WAJIB UNTUK SEMUA TRANSAKSI
-            'jenis_pembayaran_id' => 'required|exists:jenis_pembayarans,id',
         ];
 
-        // VALIDASI KHUSUS PEMASUKAN
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDASI KHUSUS TIPE MASUK
+    |--------------------------------------------------------------------------
+    */
         if ($request->tipe === 'masuk') {
-            $rules['siswa_id'] = 'nullable|exists:siswa,id';
-            $rules['metode']   = 'nullable|in:tunai,transfer';
+
+            $rules['siswa_id'] = 'required|exists:siswa,id';
+            $rules['metode']   = 'required|in:tunai,transfer';
+
+            // Jenis pembayaran array
+            $rules['jenis_pembayaran_id']   = 'required|array|min:1';
+            $rules['jenis_pembayaran_id.*'] = 'exists:jenis_pembayarans,id';
+
+            // Nominal array per jenis
+            $rules['nominal']   = 'required|array';
+            $rules['nominal.*'] = 'required';
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | VALIDASI KHUSUS TIPE KELUAR
+    |--------------------------------------------------------------------------
+    */
+        if ($request->tipe === 'keluar') {
+
+            // Nominal hanya angka biasa, bukan array
+            $rules['nominal'] = 'required';
         }
 
         $validator = Validator::make($request->all(), $rules);
 
+        /*
+    |--------------------------------------------------------------------------
+    | ATTRIBUT NAMA UNTUK TIPE MASUK (NOMINAL PER JENIS)
+    |--------------------------------------------------------------------------
+    */
+        if ($request->tipe === 'masuk') {
+            $attributeNames = [];
+
+            foreach ($request->jenis_pembayaran_id ?? [] as $jpID) {
+                $nama = \App\Models\JenisPembayaran::find($jpID)->nama_pembayaran ?? 'Nominal';
+                $attributeNames["nominal.$jpID"] = "Nominal $nama";
+            }
+
+            $validator->setAttributeNames($attributeNames);
+        }
+
         if ($validator->fails()) {
-            return back()
+
+            // Base response (TIDAK DIUBAH)
+            $response = back()
                 ->withErrors($validator)
                 ->with('error_from', 'edit_transaksi')
-                ->with('edit_id', $transaksi->id);
+                ->withInput();
+
+            // Tambahkan edit_id HANYA ketika tipe = keluar
+            if ($request->tipe === 'keluar') {
+                $response->with('edit_id', $transaksi->id);
+            }
+
+            return $response;
         }
 
         $data = $validator->validated();
 
-        // Jika tipe = keluar → siswa & metode harus null
-        if ($request->tipe === 'keluar') {
-            $data['siswa_id'] = null;
-            $data['metode'] = null;
+        /*
+    |--------------------------------------------------------------------------
+    | PROSES TIPE MASUK
+    |--------------------------------------------------------------------------
+    */
+        if ($request->tipe === 'masuk') {
+
+            // Bersihkan nominal array
+            $cleanNominal = [];
+            foreach ($request->nominal as $key => $value) {
+                $cleanNominal[$key] = (int) str_replace('.', '', $value);
+            }
+
+            // Hitung total nominal
+            $total_nominal = array_sum($cleanNominal);
+
+            // Simpan JSON data
+            $data['jenis_pembayaran_id'] = json_encode($request->jenis_pembayaran_id);
+            $data['nominal_detail']      = json_encode($cleanNominal);
+
+            // Nominal utama = total
+            $data['nominal'] = $total_nominal;
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | PROSES TIPE KELUAR
+    |--------------------------------------------------------------------------
+    */
+        if ($request->tipe === 'keluar') {
+
+            // Bersihkan nominal jadi integer
+            $data['nominal'] = (int) str_replace('.', '', $request->nominal);
+
+            // Set field tidak dipakai menjadi null
+            $data['jenis_pembayaran_id'] = null;
+            $data['nominal_detail']      = null;
+
+            $data['siswa_id'] = null;
+            // $data['metode']   = null;
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | UPDATE DATA
+    |--------------------------------------------------------------------------
+    */
         $transaksi->update($data);
 
-        return back()->with('success', 'Transaksi berhasil diperbarui.');
+        $route = $request->tipe === 'masuk' ? 'transaksi.masuk' : 'transaksi.keluar';
+
+        return redirect()->route($route)->with('success', 'Transaksi berhasil diperbarui.');
     }
 
     /**
@@ -196,17 +563,29 @@ class TransaksiController extends Controller
             $html .= "<small class='text-muted'>Belum ada transaksi.</small>";
         } else {
             foreach ($data as $h) {
+
+                // Ambil semua jenis pembayaran
+                $jenis = json_decode($h->jenis_pembayaran_id, true) ?? [];
+                $namaJenis = \App\Models\JenisPembayaran::whereIn('id', $jenis)
+                    ->pluck('nama_pembayaran')
+                    ->toArray();
+
                 $html .= "
-            <div class='d-flex justify-content-between border-bottom py-1'>
-                <div>
-                    <strong>" . ucfirst($h->tipe) . "</strong><br>
-                    " . $h->deskripsi . "<br>
-                    <small class='text-muted'>" . $h->tanggal . "</small>
+            <div class='history-item'>
+                <div class='history-header'>
+                    <div class='history-title'>" . implode(", ", $namaJenis) . "</div>
+                    <div class='history-date'>" . \Carbon\Carbon::parse($h->tanggal)->format('d-m-Y H:i') . "</div>
                 </div>
-                <div class='text-end'>
+
+                <div class='history-nominal'>
                     Rp " . number_format($h->nominal, 0, ',', '.') . "
                 </div>
-            </div>";
+
+                <div class='history-ket'>
+                    " . ($h->keterangan ?: '<i>Tidak ada keterangan</i>') . "
+                </div>
+            </div>
+            ";
             }
         }
 
@@ -222,7 +601,6 @@ class TransaksiController extends Controller
 
         return view('admin.transaksi.kwitansi', [
             't' => $transaksi,
-            'no_urut' => $noUrut
         ]);
     }
 
@@ -245,6 +623,7 @@ class TransaksiController extends Controller
             $query->whereDate('tanggal', '<=', $to);
         }
 
+        // ★ Tidak ada grouping — semua transaksi diambil apa adanya
         $rawData = $query->orderBy('tanggal', 'asc')->get();
 
         // ===============================
@@ -266,56 +645,34 @@ class TransaksiController extends Controller
         }
 
         // ===============================
-        // GROUPING PER TANGGAL
-        // ===============================
-
-        $grouped = [];
-
-        foreach ($rawData as $r) {
-
-            $key = $r->tanggal;
-
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = [
-                    'tanggal'     => date('d-m-Y', strtotime($r->tanggal)),
-                    'penerimaan'  => 0,
-                    'pengeluaran' => 0,
-                ];
-            }
-
-            if ($r->tipe === 'masuk') {
-                $grouped[$key]['penerimaan'] += $r->nominal;
-            } else {
-                $grouped[$key]['pengeluaran'] += $r->nominal;
-            }
-        }
-
-        // ===============================
-        // HITUNG SALDO BERJALAN
+        // BANGUN DATA PER BARIS (TANPA GROUPING)
         // ===============================
 
         $saldo = $saldoAwal;
-        $rows  = [];
+        $rows = [];
 
-        foreach ($grouped as $tgl => $g) {
+        foreach ($rawData as $r) {
 
-            $saldo += ($g['penerimaan'] - $g['pengeluaran']);
+            // update saldo berjalan
+            if ($r->tipe === 'masuk') {
+                $saldo += $r->nominal;
+            } else {
+                $saldo -= $r->nominal;
+            }
 
             $rows[] = [
-                'tanggal'     => $g['tanggal'],
+                'tanggal'     => date('d-m-Y H:i', strtotime($r->tanggal)),
+                'uraian'      => $r->keterangan,       // ★ langsung dari DB
+                'no_bukti'    => $r->kode_transaksi,  // ★ langsung dari DB
 
-                // Uraian manual (sesuai permintaan)
-                'uraian'      => 'Transaksi Tanggal Ini',
-
-                // Nomor bukti otomatis: BK-YYYYMMDD
-                'no_bukti'    => 'BK-' . str_replace('-', '', $tgl),
-
-                'penerimaan'  => $g['penerimaan'] > 0
-                    ? number_format($g['penerimaan'], 0, ',', '.')
+                'penerimaan'  => $r->tipe === 'masuk'
+                    ? number_format($r->nominal, 0, ',', '.')
                     : '',
-                'pengeluaran' => $g['pengeluaran'] > 0
-                    ? number_format($g['pengeluaran'], 0, ',', '.')
+
+                'pengeluaran' => $r->tipe === 'keluar'
+                    ? number_format($r->nominal, 0, ',', '.')
                     : '',
+
                 'saldo'       => number_format($saldo, 0, ',', '.'),
             ];
         }

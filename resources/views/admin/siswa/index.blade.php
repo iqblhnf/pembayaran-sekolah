@@ -115,165 +115,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($siswa as $item)
-                    <tr>
-                        <th scope="row">{{ $loop->iteration }}</th>
-                        <td>{{ $item->nama }}</td>
-                        <td>{{ $item->nis }}</td>
-                        <td>{{ $item->kelas->nama_kelas }}</td>
-                        <td>{{ $item->alamat ?? '-' }}</td>
-                        <td>{{ $item->nama_ortu ?? '-' }}</td>
-                        <td>{{ $item->telp_ortu ?? '-' }}</td>
-                        <td>
-                            <span class="badge 
-        {{ $item->status == 'aktif' ? 'bg-success' : '' }}
-        {{ $item->status == 'lulus' ? 'bg-primary' : '' }}
-        {{ $item->status == 'keluar' ? 'bg-danger' : '' }}
-    ">
-                                {{ ucfirst($item->status) }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{{ route('siswa.riwayat', $item->id) }}" class="btn btn-info btn-sm">
-                                Riwayat
-                            </a>
-                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editSiswa{{ $item->id }}">
-                                Edit
-                            </button>
-                            <form action="{{ route('siswa.destroy', $item->id) }}" method="post" class="d-inline" onsubmit="return confirm('Yakin ingin hapus siswa?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
-                            </form>
-                        </td>
-                    </tr>
-                    <div class="modal fade" id="editSiswa{{ $item->id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5">Edit Siswa</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-
-                                <form action="{{ route('siswa.update', $item->id) }}" method="post">
-                                    @csrf
-                                    @method('PUT')
-
-                                    <div class="modal-body">
-
-                                        {{-- PILIH KELAS --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">Kelas</label>
-                                            <select name="kelas_id" class="form-control">
-                                                @foreach($kelas as $k)
-                                                <option value="{{ $k->id }}"
-                                                    {{ old('kelas_id', $item->kelas_id) == $k->id ? 'selected' : '' }}>
-                                                    {{ $k->nama_kelas }}
-                                                </option>
-                                                @endforeach
-                                            </select>
-
-                                            {{-- Tampilkan error hanya untuk modal edit yang benar --}}
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('kelas_id')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- NIS --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">NIS</label>
-                                            <input type="text" class="form-control" name="nis"
-                                                value="{{ old('nis', $item->nis) }}">
-
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('nis')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- NAMA --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">Nama Siswa</label>
-                                            <input type="text" class="form-control" name="nama"
-                                                value="{{ old('nama', $item->nama) }}">
-
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('nama')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- ALAMAT --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">Alamat</label>
-                                            <textarea class="form-control" name="alamat" rows="3">{{ old('alamat', $item->alamat) }}</textarea>
-
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('alamat')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- NAMA ORANG TUA --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">Nama Orang Tua</label>
-                                            <input type="text" class="form-control" name="nama_ortu"
-                                                value="{{ old('nama_ortu', $item->nama_ortu) }}">
-
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('nama_ortu')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- TELEPON ORANG TUA --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">Telepon Orang Tua</label>
-                                            <input type="text" class="form-control" name="telp_ortu"
-                                                value="{{ old('telp_ortu', $item->telp_ortu) }}">
-
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('telp_ortu')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                        {{-- STATUS --}}
-                                        <div class="mb-3">
-                                            <label class="col-form-label">Status</label>
-                                            <select name="status" class="form-control">
-                                                <option value="aktif" {{ old('status', $item->status) == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                                <option value="lulus" {{ old('status', $item->status) == 'lulus' ? 'selected' : '' }}>Lulus</option>
-                                                <option value="keluar" {{ old('status', $item->status) == 'keluar' ? 'selected' : '' }}>Keluar</option>
-                                            </select>
-
-                                            @if (session('error_from') === 'edit_siswa' && session('edit_id') == $item->id)
-                                            @error('status')
-                                            <div class="text-danger">{{ $message }}</div>
-                                            @enderror
-                                            @endif
-                                        </div>
-
-                                    </div>
-
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary">Simpan</button>
-                                    </div>
-
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    @endforeach
                 </tbody>
             </table>
         </div>
@@ -302,7 +143,8 @@
                         <select name="kelas_id" class="form-control">
                             <option value="">-- Pilih Kelas --</option>
                             @foreach($kelas as $k)
-                            <option value="{{ $k->id }}" {{ old('kelas_id') == $k->id ? 'selected' : '' }}>
+                            <option value="{{ $k->id }}"
+                                {{ session('error_from') === 'tambah_siswa' && old('kelas_id') == $k->id ? 'selected' : '' }}>
                                 {{ $k->nama_kelas }}
                             </option>
                             @endforeach
@@ -318,7 +160,8 @@
                     {{-- NIS --}}
                     <div class="mb-3">
                         <label class="col-form-label">NIS</label>
-                        <input type="text" class="form-control" name="nis" value="{{ old('nis') }}">
+                        <input type="text" class="form-control" name="nis"
+                            value="{{ session('error_from') === 'tambah_siswa' ? old('nis') : '' }}">
 
                         @if (session('error_from') === 'tambah_siswa')
                         @error('nis')
@@ -330,7 +173,8 @@
                     {{-- NAMA --}}
                     <div class="mb-3">
                         <label class="col-form-label">Nama Siswa</label>
-                        <input type="text" class="form-control" name="nama" value="{{ old('nama') }}">
+                        <input type="text" class="form-control" name="nama"
+                            value="{{ session('error_from') === 'tambah_siswa' ? old('nama') : '' }}">
 
                         @if (session('error_from') === 'tambah_siswa')
                         @error('nama')
@@ -342,7 +186,8 @@
                     {{-- ALAMAT --}}
                     <div class="mb-3">
                         <label class="col-form-label">Alamat</label>
-                        <textarea class="form-control" name="alamat" rows="3">{{ old('alamat') }}</textarea>
+                        <textarea class="form-control" name="alamat" rows="3">
+                        {{ session('error_from') === 'tambah_siswa' ? old('alamat') : '' }}</textarea>
 
                         @if (session('error_from') === 'tambah_siswa')
                         @error('alamat')
@@ -354,7 +199,8 @@
                     {{-- NAMA ORTU --}}
                     <div class="mb-3">
                         <label class="col-form-label">Nama Orang Tua</label>
-                        <input type="text" class="form-control" name="nama_ortu" value="{{ old('nama_ortu') }}">
+                        <input type="text" class="form-control" name="nama_ortu"
+                            value="{{ session('error_from') === 'tambah_siswa' ? old('nama_ortu') : '' }}">
 
                         @if (session('error_from') === 'tambah_siswa')
                         @error('nama_ortu')
@@ -366,7 +212,8 @@
                     {{-- TELEPON ORANG TUA --}}
                     <div class="mb-3">
                         <label class="col-form-label">Telepon Orang Tua</label>
-                        <input type="text" class="form-control" name="telp_ortu" value="{{ old('telp_ortu') }}">
+                        <input type="text" class="form-control" name="telp_ortu"
+                            value="{{ session('error_from') === 'tambah_siswa' ? old('telp_ortu') : '' }}">
 
                         @if (session('error_from') === 'tambah_siswa')
                         @error('telp_ortu')
@@ -379,9 +226,18 @@
                     <div class="mb-3">
                         <label class="col-form-label">Status</label>
                         <select name="status" class="form-control">
-                            <option value="aktif" {{ old('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                            <option value="lulus" {{ old('status') == 'lulus' ? 'selected' : '' }}>Lulus</option>
-                            <option value="keluar" {{ old('status') == 'keluar' ? 'selected' : '' }}>Keluar</option>
+                            <option value="aktif"
+                                {{ session('error_from') === 'tambah_siswa' && old('status') == 'aktif' ? 'selected' : '' }}>
+                                Aktif
+                            </option>
+                            <option value="lulus"
+                                {{ session('error_from') === 'tambah_siswa' && old('status') == 'lulus' ? 'selected' : '' }}>
+                                Lulus
+                            </option>
+                            <option value="keluar"
+                                {{ session('error_from') === 'tambah_siswa' && old('status') == 'keluar' ? 'selected' : '' }}>
+                                Keluar
+                            </option>
                         </select>
 
                         @if (session('error_from') === 'tambah_siswa')
@@ -396,6 +252,113 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- ========================= -->
+<!-- MODAL EDIT SISWA -->
+<!-- ========================= -->
+<div class="modal fade" id="modalEditSiswa" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <form id="formEditSiswa" method="POST">
+                @csrf
+                @method('PUT')
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Siswa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    {{-- PILIH KELAS --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">Kelas</label>
+                        <select name="kelas_id" class="form-control">
+                            <option value="">-- Pilih Kelas --</option>
+                            @foreach($kelas as $k)
+                            <option value="{{ $k->id }}">{{ $k->nama_kelas }}</option>
+                            @endforeach
+                        </select>
+
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('kelas_id')
+                        <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                        @endif
+                    </div>
+
+                    {{-- NIS --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">NIS</label>
+                        <input type="text" class="form-control" name="nis">
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('nis') <div class="text-danger">{{ $message }}</div> @enderror
+                        @endif
+                    </div>
+
+                    {{-- NAMA --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">Nama Siswa</label>
+                        <input type="text" class="form-control" name="nama">
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('nama') <div class="text-danger">{{ $message }}</div> @enderror
+                        @endif
+                    </div>
+
+                    {{-- ALAMAT --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">Alamat</label>
+                        <textarea class="form-control" name="alamat" rows="3"></textarea>
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('alamat') <div class="text-danger">{{ $message }}</div> @enderror
+                        @endif
+                    </div>
+
+                    {{-- NAMA ORTU --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">Nama Orang Tua</label>
+                        <input type="text" class="form-control" name="nama_ortu">
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('nama_ortu') <div class="text-danger">{{ $message }}</div> @enderror
+                        @endif
+                    </div>
+
+                    {{-- TELEPON ORTU --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">Telepon Orang Tua</label>
+                        <input type="text" class="form-control" name="telp_ortu">
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('telp_ortu') <div class="text-danger">{{ $message }}</div> @enderror
+                        @endif
+                    </div>
+
+                    {{-- STATUS --}}
+                    <div class="mb-3">
+                        <label class="col-form-label">Status</label>
+                        <select name="status" class="form-control">
+                            <option value="aktif">Aktif</option>
+                            <option value="lulus">Lulus</option>
+                            <option value="keluar">Keluar</option>
+                        </select>
+                        @if (session('error_from') === 'edit_siswa')
+                        @error('status') <div class="text-danger">{{ $message }}</div> @enderror
+                        @endif
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">Batal</button>
+                    <button class="btn btn-primary">Simpan</button>
                 </div>
 
             </form>
@@ -431,23 +394,101 @@
     </div>
 </div>
 
-@if ($errors->any())
+<script>
+    // DataTables server-side (contoh)
+    $(function() {
+        $('#table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ route('siswa.data') }}",
+            columns: [{
+                    data: 0
+                }, // #
+                {
+                    data: 1
+                }, // nama
+                {
+                    data: 2
+                }, // nis
+                {
+                    data: 3
+                }, // kelas
+                {
+                    data: 4
+                }, // alamat
+                {
+                    data: 5
+                }, // ortu
+                {
+                    data: 6
+                }, // telp
+                {
+                    data: 7
+                }, // status badge
+                {
+                    data: 8,
+                    orderable: false,
+                    searchable: false
+                }, // aksi
+            ]
+        });
+    });
+
+    // TOMBOL EDIT → AMBIL DATA JSON
+    $(document).on("click", ".btn-edit", function() {
+        let id = $(this).data("id");
+
+        $.get("/siswa/" + id, function(res) {
+
+            $("#formEditSiswa").attr("action", "/siswa/" + id);
+
+            $("#modalEditSiswa select[name='kelas_id']").val(res.kelas_id);
+            $("#modalEditSiswa input[name='nis']").val(res.nis);
+            $("#modalEditSiswa input[name='nama']").val(res.nama);
+            $("#modalEditSiswa textarea[name='alamat']").val(res.alamat);
+            $("#modalEditSiswa input[name='nama_ortu']").val(res.nama_ortu);
+            $("#modalEditSiswa input[name='telp_ortu']").val(res.telp_ortu);
+            $("#modalEditSiswa select[name='status']").val(res.status);
+
+            new bootstrap.Modal(document.getElementById("modalEditSiswa")).show();
+        });
+    });
+</script>
+
+{{-- ========================= --}}
+{{-- AUTO OPEN MODAL EDIT --}}
+{{-- ========================= --}}
+@if ($errors->any() && session('error_from') === 'edit_siswa')
 <script>
     document.addEventListener("DOMContentLoaded", function() {
 
-        @if(session('error_from') === 'edit_siswa')
-        var modalEdit = new bootstrap.Modal(
-            document.getElementById("editSiswa{{ session('edit_id') }}")
-        );
-        modalEdit.show();
+        let id = "{{ session('edit_id') }}";
 
-        @elseif(session('error_from') === 'tambah_siswa')
-        var modalAdd = new bootstrap.Modal(
-            document.getElementById("tambahSiswa")
-        );
-        modalAdd.show();
-        @endif
+        // Set action ke ID yang benar
+        $("#formEditSiswa").attr("action", "/siswa/" + id);
 
+        // Isi ulang form edit dengan old()
+        $("#modalEditSiswa select[name='kelas_id']").val("{{ old('kelas_id') }}");
+        $("#modalEditSiswa input[name='nis']").val("{{ old('nis') }}");
+        $("#modalEditSiswa input[name='nama']").val("{{ old('nama') }}");
+        $("#modalEditSiswa textarea[name='alamat']").val(`{{ old('alamat') }}`);
+        $("#modalEditSiswa input[name='nama_ortu']").val("{{ old('nama_ortu') }}");
+        $("#modalEditSiswa input[name='telp_ortu']").val("{{ old('telp_ortu') }}");
+        $("#modalEditSiswa select[name='status']").val("{{ old('status') }}");
+
+        // Tampilkan modal edit
+        new bootstrap.Modal(document.getElementById("modalEditSiswa")).show();
+    });
+</script>
+@endif
+
+{{-- ========================= --}}
+{{-- AUTO OPEN MODAL TAMBAH --}}
+{{-- ========================= --}}
+@if ($errors->any() && session('error_from') === 'tambah_siswa')
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        new bootstrap.Modal(document.getElementById("tambahSiswa")).show();
     });
 </script>
 @endif

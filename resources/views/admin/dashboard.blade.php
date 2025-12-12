@@ -56,80 +56,32 @@
     </div>
 
     <!-- ============================
-         GRAFIK BULANAN
+         GRAFIK BULANAN SAJA
     ============================= -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <h5>Grafik Bulanan ({{ ucfirst($filterTipe) }})</h5>
-            <div id="monthlyChart" style="min-height: 300px;"></div>
+            <div id="monthlyChart" style="min-height: 350px;"></div>
         </div>
     </div>
 
-    <!-- ============================
-         GRAFIK MINGGUAN
-    ============================= -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5>Grafik Mingguan ({{ ucfirst($filterTipe) }})</h5>
-            <div id="weeklyChart" style="min-height: 300px;"></div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- ============================
-             PER KELAS
-        ============================= -->
-        <div class="col-md-6">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5>Per Kelas</h5>
-                    <div id="kelasChart" style="min-height: 300px;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================
-             PER METODE
-        ============================= -->
-        <div class="col-md-6">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5>Per Metode Pembayaran</h5>
-                    <div id="metodeChart" style="min-height: 300px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================
-         PER SISWA
-    ============================= -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5>Per Siswa (Top 10)</h5>
-            <div id="siswaChart" style="min-height: 300px;"></div>
-        </div>
-    </div>
-
-    <!-- ============================
-         JENIS TRANSAKSI
-    ============================= -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5>Jenis Transaksi</h5>
-            <div id="jenisChart" style="min-height: 300px;"></div>
-        </div>
-    </div>
+    {{-- Semua grafik lain DISABLED sesuai permintaan --}}
+    {{--
+        <div class="card"> GRAFIK MINGGUAN </div>
+        <div class="card"> PER KELAS </div>
+        <div class="card"> PER METODE </div>
+        <div class="card"> PER SISWA </div>
+        <div class="card"> JENIS TRANSAKSI </div>
+    --}}
 
 </div>
 @endsection
 
 
-
 @push('scripts')
 <script>
     /* =========================================================
-       BULANAN — 1 atau 2 series tergantung filter tipe
+       TENTUKAN SERIES BULANAN
     ========================================================== */
     let monthlySeries = [];
 
@@ -155,109 +107,48 @@
     }];
     @endif
 
+    /* =========================================================
+       WARNA DINAMIS
+    ========================================================== */
+    let monthlyColors = [];
+
+    @if($filterTipe === 'masuk')
+    monthlyColors = ['#28a745']; // hijau
+    @elseif($filterTipe === 'keluar')
+    monthlyColors = ['#dc3545']; // merah
+    @else
+    monthlyColors = ['#28a745', '#dc3545']; // gabungan: masuk + keluar
+    @endif
+
+
+    /* =========================================================
+       RENDER GRAFIK BULANAN
+    ========================================================== */
     new ApexCharts(document.querySelector("#monthlyChart"), {
         chart: {
             type: 'area',
-            height: 300
+            height: 350,
+            toolbar: {
+                show: true
+            }
         },
         series: monthlySeries,
+        colors: monthlyColors,
         xaxis: {
             categories: @json($monthLabels)
         },
         stroke: {
-            curve: 'smooth'
+            curve: 'smooth',
+            width: 3
         },
-        colors: ['#28a745', '#dc3545']
-    }).render();
-
-
-
-    /* =========================================================
-       MINGGUAN
-    ========================================================== */
-    new ApexCharts(document.querySelector("#weeklyChart"), {
-        chart: {
-            type: 'bar',
-            height: 300
-        },
-        series: [{
-            name: "{{ ucfirst($filterTipe) }}",
-            data: @json($weeklyData)
-        }],
-        xaxis: {
-            categories: @json($weeklyLabels)
-        },
-        colors: ['#0d6efd']
-    }).render();
-
-
-
-    /* =========================================================
-       PER KELAS
-    ========================================================== */
-    new ApexCharts(document.querySelector("#kelasChart"), {
-        chart: {
-            type: 'bar',
-            height: 300
-        },
-        series: [{
-            name: "Total",
-            data: @json($kelasTotals)
-        }],
-        xaxis: {
-            categories: @json($kelasLabels)
-        },
-        colors: ['#6610f2']
-    }).render();
-
-
-
-    /* =========================================================
-       PER METODE
-    ========================================================== */
-    new ApexCharts(document.querySelector("#metodeChart"), {
-        chart: {
-            type: 'pie',
-            height: 300
-        },
-        series: @json($metodeTotals),
-        labels: @json($metodeLabels),
-        colors: ['#20c997', '#fd7e14']
-    }).render();
-
-
-
-    /* =========================================================
-       PER SISWA
-    ========================================================== */
-    new ApexCharts(document.querySelector("#siswaChart"), {
-        chart: {
-            type: 'bar',
-            height: 300
-        },
-        series: [{
-            name: "Total",
-            data: @json($siswaTotals)
-        }],
-        xaxis: {
-            categories: @json($siswaLabels)
-        },
-        colors: ['#17a2b8']
-    }).render();
-
-
-
-    /* =========================================================
-       JENIS TRANSAKSI
-    ========================================================== */
-    new ApexCharts(document.querySelector("#jenisChart"), {
-        chart: {
-            type: 'donut',
-            height: 300
-        },
-        series: @json($jenisTotals),
-        labels: @json($jenisLabels),
-        colors: ['#0dcaf0', '#6610f2', '#ffc107', '#198754', '#dc3545']
+        fill: {
+            type: "gradient",
+            gradient: {
+                shadeIntensity: 0.4,
+                opacityFrom: 0.5,
+                opacityTo: 0.1
+            }
+        }
     }).render();
 </script>
 @endpush
