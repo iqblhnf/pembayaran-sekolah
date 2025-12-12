@@ -183,7 +183,7 @@
                                     <label class="form-label fw-bold">Tanggal</label>
                                     <input type="datetime-local" class="form-control"
                                         name="tanggal"
-                                        value="{{ old('tanggal', $transaksi->tanggal) }}">
+                                        value="{{ old('tanggal', $transaksi->tanggal) }}" readonly>
 
                                     @if(session('error_from') === 'edit_transaksi')
                                     @error('tanggal') <div class="text-danger">{{ $message }}</div> @enderror
